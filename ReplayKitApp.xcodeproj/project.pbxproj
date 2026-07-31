@@ -397,14 +397,17 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "ReplayKitApp/docs/Initial_Idea.md ReplayKitApp/docs ReplayKitApp/docs/Files\\ 1.png ReplayKitApp/docs/App\\ Groups\\ &\\ Keychain\\ Sharing.png ReplayKitApp/docs/Architecture.png ReplayKitApp/docs/C\\ -\\ In\\ App\\ Screen\\ Broadcast\\ -\\ Clarification.png ReplayKitApp/docs/Files\\ 2.png ReplayKitApp/docs/B\\ vs\\ C\\ -\\ In-App\\ Broadcast\\ (C)\\ vs.\\ In-App\\ Raw\\ Frame\\ Capture\\ (B).png";
 				DEVELOPMENT_TEAM = 83P7Q7YP3W;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Please Allow App to authenticate via Biometrics";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -429,14 +432,17 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "ReplayKitApp/docs/Initial_Idea.md ReplayKitApp/docs ReplayKitApp/docs/Files\\ 1.png ReplayKitApp/docs/App\\ Groups\\ &\\ Keychain\\ Sharing.png ReplayKitApp/docs/Architecture.png ReplayKitApp/docs/C\\ -\\ In\\ App\\ Screen\\ Broadcast\\ -\\ Clarification.png ReplayKitApp/docs/Files\\ 2.png ReplayKitApp/docs/B\\ vs\\ C\\ -\\ In-App\\ Broadcast\\ (C)\\ vs.\\ In-App\\ Raw\\ Frame\\ Capture\\ (B).png";
 				DEVELOPMENT_TEAM = 83P7Q7YP3W;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Please Allow App to authenticate via Biometrics";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
