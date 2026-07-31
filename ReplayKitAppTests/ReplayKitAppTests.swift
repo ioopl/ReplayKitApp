@@ -1,38 +1,107 @@
-//
-//  ReplayKitAppTests.swift
-//  ReplayKitAppTests
-//
-//  Created by Umair Hasan on 26/07/2026.
-//
-
 import XCTest
+import Combine
+import ReplayKit
+import CryptoKit
 @testable import ReplayKitApp
 
+// MARK: - Tests
+
 final class ReplayKitAppTests: XCTestCase {
-
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+    
+    @MainActor
+    func testInAppRecordingViewModelState() async {
+        let mockService = MockScreenRecorderService()
+        let viewModel = InAppRecordingViewModel(recorderService: mockService)
+        
+        XCTAssertFalse(viewModel.isRecording)
+        
+        viewModel.startRecording()
+        try? await Task.sleep(nanoseconds: 100_000_000) // allow task to execute
+        XCTAssertTrue(viewModel.isRecording)
+        
+        viewModel.stopRecording()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertFalse(viewModel.isRecording)
     }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    
+    @MainActor
+    func testInAppCaptureViewModelState() async {
+        let mockService = MockScreenRecorderService()
+        let mockKeychain = MockKeychainService()
+        let viewModel = InAppCaptureViewModel(recorderService: mockService, keychainService: mockKeychain)
+        
+        XCTAssertFalse(viewModel.isCapturing)
+        
+        viewModel.startCapture()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(viewModel.isCapturing)
+        XCTAssertNotNil(try? mockKeychain.getSymmetricKey())
+        
+        viewModel.stopCapture()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertFalse(viewModel.isCapturing)
     }
-
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
-        // XCTest Documentation
-        // https://developer.apple.com/documentation/xctest
+    
+    @MainActor
+    func testSystemWideScreenBroadcastViewModelState() async {
+        let mockKeychain = MockKeychainService()
+        let viewModel = SystemWideScreenBroadcastViewModel(keychainService: mockKeychain)
+        
+        XCTAssertFalse(viewModel.isAuthenticated)
+        
+        viewModel.authenticateAndPrepareKeys()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        
+        XCTAssertTrue(viewModel.isAuthenticated)
+        XCTAssertTrue(mockKeychain.keyPairGenerated)
+        XCTAssertNotNil(try? mockKeychain.getSymmetricKey())
     }
-
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+    
+    @MainActor
+    func testInAppClipsViewModelState() async {
+        let mockService = MockScreenRecorderService()
+        let viewModel = InAppClipsViewModel(recorderService: mockService)
+        
+        XCTAssertFalse(viewModel.isClipBuffering)
+        
+        viewModel.startClipBuffering()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(viewModel.isClipBuffering)
+        
+        viewModel.exportClip()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertFalse(viewModel.isExporting)
+        XCTAssertEqual(viewModel.lastExportedClipURL?.path, "/tmp/mock_clip.mp4")
+        
+        viewModel.stopClipBuffering()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertFalse(viewModel.isClipBuffering)
+    }
+    
+    func testSharedKeychainManagerProductionSaveRetrieve() {
+        let manager = SharedKeychainManager.shared
+        
+        // Clean up previous runs
+        try? manager.deleteSymmetricKey()
+        
+        do {
+            let initialKey = try manager.getSymmetricKey()
+            XCTAssertNil(initialKey)
+            
+            let createdKey = try manager.getOrCreateSymmetricKey()
+            let retrievedKey = try manager.getSymmetricKey()
+            
+            XCTAssertNotNil(retrievedKey)
+            
+            // Compare bytes of the two symmetric keys
+            let createdData = createdKey.withUnsafeBytes { Data($0) }
+            let retrievedData = retrievedKey!.withUnsafeBytes { Data($0) }
+            XCTAssertEqual(createdData, retrievedData)
+            
+            try manager.deleteSymmetricKey()
+            XCTAssertNil(try manager.getSymmetricKey())
+        } catch {
+            XCTFail("Keychain operation failed: \(error)")
         }
     }
-
 }
