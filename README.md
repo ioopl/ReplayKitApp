@@ -2,6 +2,15 @@
 
 This document outlines the system architecture, security implementation, memory optimization strategies, and backend/gRPC integration plans for the ReplayKit high-security broadcasting client.
 
+
+```
+References: 
+Following these WWDC videos - tutorials 
+https://developer.apple.com/videos/play/wwdc2021/10101/
+https://developer.apple.com/la/videos/play/wwdc2020/10633/
+```
+
+
 ---
 
 ## 1. System Architecture & IPC (App Groups)
@@ -52,9 +61,9 @@ ReplayKit Broadcast Extensions are terminated by iOS immediately if memory usage
 
 ---
 
-## 4. ArchAI gRPC & WebRTC Backend Integration
+## 4. gRPC & WebRTC Backend Integration
 
-To stream the encrypted frames, we can integrate with WebRTC or a custom gRPC backend.
+To stream the encrypted frames, we can integrate with WebRTC or a custom gRPC backend or even use Youtube/ Twitch Streaming Server.
 
 ### gRPC HTTP/2 Streaming (ArchAI Backend)
 To push video frames over a high-performance gRPC bi-directional stream:
@@ -75,6 +84,7 @@ To push video frames over a high-performance gRPC bi-directional stream:
    }
    ```
 2. Integrate Swift gRPC Client (via Swift Package Manager).
+
 3. Establish a streaming connection inside `SampleHandler`:
    * Set up a gRPC channel using TLS client configuration.
    * Call `StreamFrames` to get a streaming writer.
