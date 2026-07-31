@@ -61,7 +61,7 @@ struct ContentView: View {
                             )
                         }
                         
-                        NavigationLink(destination: InAppBroadcastView()) {
+                        NavigationLink(destination: SystemWideScreenBroadcastView()) {
                             MenuCard(
                                 title: "C) System Wide - Screen Broadcast",
                                 subtitle: "Launch System Broadcast picker for Broadcast Upload Extension. The Broadcast Upload Extension is designed for live streaming and cross-app background capture.",

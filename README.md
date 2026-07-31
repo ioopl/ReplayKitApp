@@ -63,7 +63,19 @@ ReplayKit Broadcast Extensions are terminated by iOS immediately if memory usage
 
 ## 4. gRPC & WebRTC Backend Integration
 
-To stream the encrypted frames, we can integrate with WebRTC or a custom gRPC backend or even use Youtube/ Twitch Streaming Server.
+Option A (In-App Screen Recording) is designed to produce a local, fully finished MP4 video file.
+
+However, in many production scenarios, we don't want a file. Instead, you need the raw video feed in real time. 
+So Option B (In-App Raw Frame Capture) is designed for these scenarios:
+
+A) Custom Low-Latency Live Streaming: Sending the screen frames directly over a WebRTC or gRPC pipeline to a streaming platform (like Twitch, YouTube Live, or an enterprise webinar tool).
+
+B) Remote Assistance & Screen Sharing: Real-time collaborative apps (like Zoom, MS Teams, TeamViewer) where an operator needs to see your app screen instantly.
+
+C) Real-time Video Processing: Applying real-time filters, computer vision analytics, or watermarking on the screen feed before transmitting it.
+
+See file ['./In-App Raw Frame Capture/README-B.md'] for details. 
+
 
 ### gRPC HTTP/2 Streaming (ArchAI Backend)
 To push video frames over a high-performance gRPC bi-directional stream:
