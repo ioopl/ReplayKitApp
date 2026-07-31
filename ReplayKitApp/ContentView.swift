@@ -72,8 +72,8 @@ struct ContentView: View {
                         
                         NavigationLink(destination: InAppClipsView()) {
                             MenuCard(
-                                title: "D) Rolling Clips Recording",
-                                subtitle: "Start a rolling clip buffer to export the last 15 seconds",
+                                title: "D) Rolling Clips Recording (for In-App Screen Recording)",
+                                subtitle: "Start a rolling clip buffer to export the last 15 seconds. Keep an efficient, in-memory circular queue of frame buffers to export the last 15-30 seconds of gameplay or app use without writing massive temporary files to disk.",
                                 icon: "clock.arrow.2.circlepath",
                                 color: .purple
                             )
