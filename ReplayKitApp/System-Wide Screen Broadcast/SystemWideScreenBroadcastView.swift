@@ -13,11 +13,18 @@ public struct SystemWideScreenBroadcastView: View {
                 .bold()
                 .padding(.top)
             
-            Text("Option C: Launch the system broadcast picker to record and stream using the Broadcast Upload Extension.")
+            Text("Launch the system broadcast picker to record and stream using the Broadcast Upload Extension.")
                 .font(.body)
-                .multilineTextAlignment(.center)
+                .multilineTextAlignment(.leading)
                 .foregroundColor(.secondary)
                 .padding(.horizontal)
+            ScrollView {
+                Text("Note: Auth Status refers to verifying that the main app (or user session) is authenticated with your server backend or local security layer before initiating the stream. \nBecause the Broadcast Extension runs as a separate binary target: \nThe main app authenticates the user (e.g., getting a JWT token or stream key). \nIt saves this key/token into NSUserDefaults (with App Groups) or Keychain (Shared Access Group). \nThe Broadcast Extension reads the token from the shared storage to authorize the streaming session with your server/CDN.")
+                    .font(.footnote)
+                    .multilineTextAlignment(.leading)
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal)
+            }
             
             Spacer()
             

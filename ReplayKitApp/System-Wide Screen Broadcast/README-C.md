@@ -1,3 +1,22 @@
+# Why this setup i.e. "1. Create the Broadcast Extension Target", "2. App Groups - As a New Capability" and what the ultimate end game is for a system-wide broadcasting architecture:
+
+1. The Ultimate End Game for System-Wide Broadcasting (Option C)
+
+The final goal is to allow the user to broadcast their entire iPhone screen, even when they exit this App.
+
+If we only use in-App capture (Option B), the moment the user minimizes our App to open a game, a browser, or their settings, the capture stops.
+
+By setting up the Broadcast Upload Extension, the user can:
+
+1. Tap "Start Broadcast" in the App.
+2. Swipe up, leave our app, and go to any other App on their phone.
+3. The background extension will capture their screen, encrypt it frame-by-frame, and stream it to a server, completely in the background.
+
+
+# Why a Separate Target is Required (iOS Security)
+
+-----------------------------------------------------------------------------------------
+
 #  SystemWideScreenBroadcastView.swift & SystemWideScreenBroadcastViewModel.swift 
  
 ## Verifies Biometrics (LAContext) and hosts RPSystemBroadcastPickerView to launch the upload extension. (Broadcast Upload Extension) 
@@ -26,9 +45,11 @@ Apple expects me to pipe these sample buffers into an RTMP stream (Twitch, YouTu
 
 💡 2. See (In-App Broadcast (C) vs. In-App Raw Frame Capture (B) -- file under /docs folder)
 
+-----------------------------------------------------------------------------------------
 
-## 3. What is "Auth Status" in this context?
+# What is "Auth Status" in this context?
 In our UI, Auth Status refers to verifying that the main app (or user session) is authenticated with our server backend or local security layer before initiating the stream.
+
 Because the Broadcast Extension runs as a separate binary target:
 
 1. The main App authenticates the user (e.g., getting a JWT token or stream key).

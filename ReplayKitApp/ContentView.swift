@@ -55,7 +55,7 @@ struct ContentView: View {
                         NavigationLink(destination: InAppCaptureView()) {
                             MenuCard(
                                 title: "B) In-App Raw Frame Capture",
-                                subtitle: "Capture raw screen buffers and encrypt them in real time using CryptoKit AES-GCM. Custom Low-Latency Live Streaming. Remote Assistance & Screen Sharing. Real-time Video Processing.",
+                                subtitle: "Capture raw screen buffers and encrypt them in real time using CryptoKit AES-GCM. \nLive Streaming. \nRemote Assistance & Screen Sharing. \nReal-time Video Processing.",
                                 icon: "camera.aperture",
                                 color: .green
                             )
@@ -64,7 +64,7 @@ struct ContentView: View {
                         NavigationLink(destination: SystemWideScreenBroadcastView()) {
                             MenuCard(
                                 title: "C) System Wide - Screen Broadcast",
-                                subtitle: "Launch System Broadcast picker for Broadcast Upload Extension. The Broadcast Upload Extension is designed for live streaming and cross-app background capture.",
+                                subtitle: "Allow the user to broadcast their entire iPhone screen, even when they exit this App. This option Launch System Broadcast picker for Broadcast Upload Extension. The Broadcast Upload Extension is designed for live streaming and cross-app background capture.",
                                 icon: "antenna.radiowaves.left.and.right",
                                 color: .blue
                             )

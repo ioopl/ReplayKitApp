@@ -32,17 +32,18 @@ Instead of ReplayKit writing the screen output to a file, the OS sends a callbac
 
 # 3. What are those "Frames" and where do they go?
 
-What are they? They are individual snapshots of your screen at that millisecond.
+Answer: They are individual snapshots of the Screen at that millisecond.
 
-Where do they go? In this demo, the encrypted frame data is processed strictly in-memory and then discarded.
+In this demo, the encrypted frame data is processed strictly in-memory and then discarded.
 
-Why does "nothing happen" when you stop? Unlike Option A, which saves a video to your Photos library, Option B simulates a live broadcast transmitter. Once you stop the capture:
+Unlike Option A, which saves a video to our Photos library, Option B simulates a live broadcast transmitter. Once we stop the capture:
 
 - The ReplayKit pipeline is torn down.
 - The memory buffer holding the last frame is released.
-In a production system, instead of discarding the encryptedPayload, you would pass it to your socket or gRPC network stream:
+In a production system, instead of discarding the encryptedPayload, we would pass it to our socket or gRPC network stream:
 
-// In a production app, the frames are streamed to the network: `self.networkService.sendFrame(encryptedPayload)`
+// In a production App, the frames are streamed to the network: `self.networkService.sendFrame(encryptedPayload)`
 
 Since there is no backend server connected yet, the demo simply outputs performance metrics (how many frames were successfully processed and the payload size of the last encrypted frame) to prove the pipeline is active and encrypting at low latency.
+
 
