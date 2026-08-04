@@ -13,7 +13,7 @@ public struct InAppClipsView: View {
                 .bold()
                 .padding(.top)
             
-            Text("Option D: Record a rolling buffer of your In-App Screen and export the last 15 seconds as a video file.")
+            Text("Option D: Record a rolling buffer of our In-App Screen and export the last 15 seconds as a video file.")
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)

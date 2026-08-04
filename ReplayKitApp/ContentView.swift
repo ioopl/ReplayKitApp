@@ -64,7 +64,7 @@ struct ContentView: View {
                         NavigationLink(destination: SystemWideScreenBroadcastView()) {
                             MenuCard(
                                 title: "C) System Wide - Screen Broadcast",
-                                subtitle: "Allow the user to broadcast their entire iPhone screen, even when they exit this App. This option Launch System Broadcast picker for Broadcast Upload Extension. The Broadcast Upload Extension is designed for live streaming and cross-app background capture.",
+                                subtitle: "Allow the user to broadcast their entire iPhone screen, even when they exit this App. This option launch the System Broadcast picker for Broadcast Upload Extension. The Broadcast Upload Extension is designed for live streaming and cross-app background capture.",
                                 icon: "antenna.radiowaves.left.and.right",
                                 color: .blue
                             )

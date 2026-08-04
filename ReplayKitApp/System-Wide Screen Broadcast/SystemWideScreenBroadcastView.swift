@@ -12,17 +12,28 @@ public struct SystemWideScreenBroadcastView: View {
                 .font(.title2)
                 .bold()
                 .padding(.top)
-            
-            Text("Launch the system broadcast picker to record and stream using the Broadcast Upload Extension.")
-                .font(.body)
-                .multilineTextAlignment(.leading)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
+
             ScrollView {
-                Text("Note: Auth Status refers to verifying that the main app (or user session) is authenticated with your server backend or local security layer before initiating the stream. \nBecause the Broadcast Extension runs as a separate binary target: \nThe main app authenticates the user (e.g., getting a JWT token or stream key). \nIt saves this key/token into NSUserDefaults (with App Groups) or Keychain (Shared Access Group). \nThe Broadcast Extension reads the token from the shared storage to authorize the streaming session with your server/CDN.")
+                Text("Launch the system broadcast picker to record and stream using the Broadcast Upload Extension. This option captures the entire iOS screen (Home screen, other apps, notifications). It spawns a separate system process (the Broadcast Upload Extension).")
+                    .font(.body)
+                    .multilineTextAlignment(.leading)
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal)
+            }
+            
+            ScrollView {
+                Text("Note: Auth Status refers to verifying that the main app (or user session) is authenticated with our server backend or local security layer before initiating the stream. \n\nBecause the Broadcast Extension runs as a separate binary target: \n\nThe main app authenticates the user (e.g., getting a JWT token or stream key). \n\nIt saves this key/token into NSUserDefaults (with App Groups) or Keychain (Shared Access Group). \n\nThe Broadcast Extension reads the token from the shared storage to authorize the streaming session with our server/CDN.")
                     .font(.footnote)
                     .multilineTextAlignment(.leading)
                     .foregroundColor(.secondary)
+                    .padding(.horizontal)
+            }
+            
+            ScrollView {
+                Text("Network Payload: Typically encoded and streamed to a streaming server (WebRTC/gRPC) in real time.")
+                    .font(.footnote)
+                    .multilineTextAlignment(.leading)
+                    .foregroundColor(.green)
                     .padding(.horizontal)
             }
             
@@ -97,7 +108,7 @@ struct BroadcastPickerRepresentable: UIViewRepresentable {
     func makeUIView(context: Context) -> RPSystemBroadcastPickerView {
         let picker = RPSystemBroadcastPickerView(frame: CGRect(x: 0, y: 0, width: 80, height: 80))
         picker.showsMicrophoneButton = true
-        // Set this to your actual Broadcast Extension bundle ID
+        // Set this to our actual Broadcast Extension bundle ID
         picker.preferredExtension = "com.example.ReplayKitApp.BroadcastExtension"
         return picker
     }

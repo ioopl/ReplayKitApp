@@ -41,6 +41,11 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     private func prepareKeys() {
         do {
             // Generate Enclave Key Pair (or fallback)
+            /**
+             Secure Enclave Interactions: In generateSecureEnclaveKey(), the manager utilizes:
+             kSecAttrTokenIDSecureEnclave to instruct iOS to build the key pair in hardware.
+             SecAccessControl with flags [.userPresence, .privateKeyUsage] to bind the key usage directly to biometrics (FaceID/TouchID).
+             */
             try keychainService.generateSecureEnclaveKey()
             
             // Create or fetch symmetric key
