@@ -13,14 +13,19 @@ public class SharedKeychainManager: KeychainServiceProtocol {
     public static let shared = SharedKeychainManager()
     
     // Replace with your actual App Group ID (must match Entitlements)
-    public static let accessGroup = "group.com.example.shared-group"
-    public static let keyTag = "com.example.app.session-key"
-    public static let enclaveTag = "com.example.app.enclave-key"
+    public static let accessGroup = "group.com.apkia.replaykitapp.shared-group"
+    public static let keyTag = "com.apkia.replaykitapp.session-key"
+    public static let enclaveTag = "com.apkia.replaykitapp.enclave-key"
     
     private init() {}
     
     /// Generates a hardware-bound key pair in the Secure Enclave.
     /// On Simulators, falls back to a standard Software EC key pair if Enclave is unavailable.
+    /**
+    Secure Enclave Interactions: In generateSecureEnclaveKey(), the manager utilizes:
+    kSecAttrTokenIDSecureEnclave to instruct iOS to build the key pair in hardware.
+    SecAccessControl with flags [.userPresence, .privateKeyUsage] to bind the key usage directly to biometrics (FaceID/TouchID).
+    */
     public func generateSecureEnclaveKey() throws {
         var error: Unmanaged<CFError>?
         
@@ -85,6 +90,13 @@ public class SharedKeychainManager: KeychainServiceProtocol {
         print("Fallback Software Key Pair generated successfully.")
     }
     
+    /**
+     Used by both Option B and C.
+     
+     Keychain Interactions: In getOrCreateSymmetricKey() and getSymmetricKey(), the manager utilizes:
+     kSecClassGenericPassword to save the raw 256-bit symmetric key (SymmetricKey) in the Keychain.
+     kSecAttrAccessGroup with group.com.example.shared-group to make the key readable by both the main app and the background Broadcast Extension.
+     */
     /// Retrieves or generates a 256-bit symmetric session key.
     public func getOrCreateSymmetricKey() throws -> SymmetricKey {
         if let existingKey = try getSymmetricKey() {

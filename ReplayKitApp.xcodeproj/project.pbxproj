@@ -395,6 +395,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ReplayKitApp/ReplayKitApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "ReplayKitApp/docs/Initial_Idea.md ReplayKitApp/docs ReplayKitApp/docs/Files\\ 1.png ReplayKitApp/docs/App\\ Groups\\ &\\ Keychain\\ Sharing.png ReplayKitApp/docs/Architecture.png ReplayKitApp/docs/C\\ -\\ In\\ App\\ Screen\\ Broadcast\\ -\\ Clarification.png ReplayKitApp/docs/Files\\ 2.png ReplayKitApp/docs/B\\ vs\\ C\\ -\\ In-App\\ Broadcast\\ (C)\\ vs.\\ In-App\\ Raw\\ Frame\\ Capture\\ (B).png";
@@ -430,6 +431,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ReplayKitApp/ReplayKitApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "ReplayKitApp/docs/Initial_Idea.md ReplayKitApp/docs ReplayKitApp/docs/Files\\ 1.png ReplayKitApp/docs/App\\ Groups\\ &\\ Keychain\\ Sharing.png ReplayKitApp/docs/Architecture.png ReplayKitApp/docs/C\\ -\\ In\\ App\\ Screen\\ Broadcast\\ -\\ Clarification.png ReplayKitApp/docs/Files\\ 2.png ReplayKitApp/docs/B\\ vs\\ C\\ -\\ In-App\\ Broadcast\\ (C)\\ vs.\\ In-App\\ Raw\\ Frame\\ Capture\\ (B).png";
