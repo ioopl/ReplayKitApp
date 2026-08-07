@@ -90,17 +90,57 @@ public struct SystemWideScreenBroadcastView: View {
                         .padding(.horizontal)
                 }
             } else {
-                VStack(spacing: 16) {
+                VStack(spacing: 24) {
                     Text("Tap below to launch System Broadcast Picker:")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
                     BroadcastPickerRepresentable()
                         .frame(width: 80, height: 80)
+                    
+                    Button(action: {
+                        viewModel.simulateBroadcastEnded()
+                    }) {
+                        Label("Simulate Post-Broadcast Summary", systemImage: "sparkles")
+                            .font(.subheadline)
+                            .foregroundColor(.purple)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.purple.opacity(0.1))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                            )
+                            .padding(.horizontal)
+                    }
                 }
             }
         }
         .padding()
+        .sheet(isPresented: Binding(
+            get: { viewModel.showSummary || viewModel.showMockSummary },
+            set: { newValue in
+                if !newValue {
+                    viewModel.showSummary = false
+                    viewModel.showMockSummary = false
+                }
+            }
+        )) {
+            PostSessionSummaryView(
+                title: "Broadcast Ended",
+                duration: viewModel.lastSessionDuration,
+                mode: .liveStream(
+                    streamURL: "https://live.securebroadcast.com/archive/rec_\(Int(Date().timeIntervalSince1970)).mp4",
+                    resolution: "1920x1080",
+                    fps: 60
+                ),
+                onDismiss: {
+                    viewModel.showSummary = false
+                    viewModel.showMockSummary = false
+                }
+            )
+        }
     }
 }
 

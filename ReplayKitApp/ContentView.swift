@@ -7,19 +7,15 @@ struct ContentView: View {
                 VStack(spacing: 24) {
                     // Header Section
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Broadcast Client")
+                        Text("Secure ReplayKit App: Broadcast Client")
                             .font(.system(size: 34, weight: .bold, design: .rounded))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [.blue, .purple],
+                                    colors: [.blue, .purple, .pink],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
-                        
-                        Text("High-security, low-latency ReplayKit broadcasting demo.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
@@ -27,7 +23,7 @@ struct ContentView: View {
                     
                     // Welcome Card
                     VStack(alignment: .leading, spacing: 12) {
-                        Label("Production Architecture", systemImage: "lock.shield.fill")
+                        Label("Architectures", systemImage: "lock.shield.fill")
                             .font(.headline)
                             .foregroundColor(.blue)
                         
