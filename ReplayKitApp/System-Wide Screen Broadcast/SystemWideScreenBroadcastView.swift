@@ -99,21 +99,22 @@ public struct SystemWideScreenBroadcastView: View {
                         .frame(width: 80, height: 80)
                     
                     Button(action: {
-                        viewModel.simulateBroadcastEnded()
+                        viewModel.showSummary = true
                     }) {
-                        Label("Simulate Post-Broadcast Summary", systemImage: "sparkles")
+                        Label("Post-Broadcast Summary", systemImage: "sparkles")
                             .font(.subheadline)
-                            .foregroundColor(.purple)
+                            .foregroundColor(viewModel.lastVideoURL != nil ? .purple : .gray)
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .background(Color.purple.opacity(0.1))
+                            .background(viewModel.lastVideoURL != nil ? Color.purple.opacity(0.1) : Color.gray.opacity(0.1))
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                                    .stroke(viewModel.lastVideoURL != nil ? Color.purple.opacity(0.3) : Color.gray.opacity(0.3), lineWidth: 1)
                             )
                             .padding(.horizontal)
                     }
+                    .disabled(viewModel.lastVideoURL == nil)
                 }
             }
         }
@@ -130,14 +131,13 @@ public struct SystemWideScreenBroadcastView: View {
             PostSessionSummaryView(
                 title: "Broadcast Ended",
                 duration: viewModel.lastSessionDuration,
-                mode: .liveStream(
-                    streamURL: "https://live.securebroadcast.com/archive/rec_\(Int(Date().timeIntervalSince1970)).mp4",
-                    resolution: "1920x1080",
-                    fps: 60
-                ),
+                mode: .local(videoURL: viewModel.lastVideoURL, fileSize: viewModel.lastSessionSize),
                 onDismiss: {
                     viewModel.showSummary = false
                     viewModel.showMockSummary = false
+                },
+                onDeleteBuffer: {
+                    viewModel.deleteLocalBuffer()
                 }
             )
         }

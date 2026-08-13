@@ -13,6 +13,13 @@ By setting up the Broadcast Upload Extension, the user can:
 3. The background extension will capture their screen, encrypt it frame-by-frame, and stream it to a server, completely in the background.
 
 
+-----------------------------------------------------------------------------------------
+
+# Real Video & Streaming Integration 
+We integrated AVAssetWriter into the out-of-process Broadcast Extension (SampleHandler) for System-Wide Screen Broadcasting (Option C) to save the actual screen capture into the shared App Group container. This enables real playback and sharing in the host app upon ending the broadcast.
+
+-----------------------------------------------------------------------------------------
+
 # Why a Separate Target is Required (iOS Security)
 
 -----------------------------------------------------------------------------------------

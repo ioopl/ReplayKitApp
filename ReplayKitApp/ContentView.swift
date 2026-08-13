@@ -90,7 +90,7 @@ struct MenuCard: View {
     let color: Color
     
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(alignment: .top, spacing: 16) {
             ZStack {
                 Circle()
                     .fill(color.opacity(0.1))

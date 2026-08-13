@@ -4,6 +4,7 @@ import ReplayKit
 import CryptoKit
 import LocalAuthentication
 import AVFoundation
+import UIKit
 
 @MainActor
 public class InAppCaptureViewModel: ObservableObject {
@@ -18,6 +19,8 @@ public class InAppCaptureViewModel: ObservableObject {
     @Published public var lastSessionDuration: TimeInterval = 0
     @Published public var lastSessionSize: Int64 = 0
     
+    @Published public var records: [FrameRecord] = []
+    
     public var lastVideoURL: URL?
     
     private let recorderService: ScreenRecorderServiceProtocol
@@ -27,6 +30,10 @@ public class InAppCaptureViewModel: ObservableObject {
     
     private var startTime: Date?
     private var accumulatedSize: Int64 = 0
+    
+    // Cryptographic Ledger Tracking
+    private var lastChainHash = "0000000000000000000000000000000000000000000000000000000000000000"
+    private var sessionID = UUID().uuidString
     
     // Video writing variables
     private var assetWriter: AVAssetWriter?
@@ -92,6 +99,9 @@ public class InAppCaptureViewModel: ObservableObject {
         frameCount = 0
         lastEncryptedSize = 0
         accumulatedSize = 0
+        records.removeAll()
+        lastChainHash = "0000000000000000000000000000000000000000000000000000000000000000"
+        sessionID = UUID().uuidString
         hasStartedSession = false
         startTime = Date()
         
@@ -243,14 +253,59 @@ public class InAppCaptureViewModel: ObservableObject {
         self.currentVideoURL = nil
     }
     
+    private func hashCVPixelBuffer(_ pixelBuffer: CVPixelBuffer) -> String {
+        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly) }
+        
+        guard let baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer) else { return "" }
+        let height = CVPixelBufferGetHeight(pixelBuffer)
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
+        let totalBytes = bytesPerRow * height
+        
+        let bufferPointer = UnsafeRawBufferPointer(start: baseAddress, count: totalBytes)
+        let digest = SHA256.hash(data: bufferPointer)
+        return digest.compactMap { String(format: "%02x", $0) }.joined()
+    }
+    
+    private func createThumbnail(from imageBuffer: CVPixelBuffer) -> UIImage? {
+        let ciImage = CIImage(cvImageBuffer: imageBuffer)
+        let width = CGFloat(CVPixelBufferGetWidth(imageBuffer))
+        guard width > 0 else { return nil }
+        let scale: CGFloat = 80.0 / width
+        let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        let context = CIContext(options: [.useSoftwareRenderer: false])
+        if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
+            return UIImage(cgImage: cgImage)
+        }
+        return nil
+    }
+    
+    private func getHexDump(from data: Data, limit: Int = 32) -> String {
+        let subData = data.prefix(limit)
+        return subData.map { String(format: "%02X", $0) }.joined(separator: " ")
+    }
+    
     private func processAndEncryptFrame(_ sampleBuffer: CMSampleBuffer) {
         guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         
+        let width = CVPixelBufferGetWidth(imageBuffer)
+        let height = CVPixelBufferGetHeight(imageBuffer)
+        
+        // 1. Option A: Compute SHA-256 over raw pixel bytes of the captured frame
+        let frameHash = hashCVPixelBuffer(imageBuffer)
+        
+        // Convert to JPEG for size evaluation and thumbnail representation
         let ciImage = CIImage(cvImageBuffer: imageBuffer)
         let context = CIContext(options: [.useSoftwareRenderer: false])
-        
         guard let jpegData = context.jpegRepresentation(of: ciImage, colorSpace: CGColorSpaceCreateDeviceRGB(), options: [:]) else { return }
         
+        // 2. Compute Hash chain
+        let prevHash = lastChainHash
+        let chainInput = frameHash + prevHash
+        let currentChainHash = SHA256.hash(data: Data(chainInput.utf8)).compactMap { String(format: "%02x", $0) }.joined()
+        lastChainHash = currentChainHash
+        
+        // 3. Encrypt the JPEG payload using hardware-bound symmetric key
         guard let key = self.symmetricKey else { return }
         
         do {
@@ -258,11 +313,48 @@ public class InAppCaptureViewModel: ObservableObject {
             let payload = sealedBox.combined
             let payloadSize = payload?.count ?? 0
             
+            let elapsed: Double
+            if let start = startTime {
+                elapsed = Date().timeIntervalSince(start)
+            } else {
+                elapsed = 0.0
+            }
+            
+            let minutes = Int(elapsed) / 60
+            let seconds = Int(elapsed) % 60
+            let milliseconds = Int((elapsed.truncatingRemainder(dividingBy: 1.0)) * 1000)
+            let timeString = String(format: "%02d:%02d.%03d", minutes, seconds, milliseconds)
+            
+            let thumbnailImage = createThumbnail(from: imageBuffer)
+            let hexBytesString = getHexDump(from: payload ?? Data())
+            
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 self.frameCount += 1
                 self.lastEncryptedSize = payloadSize
                 self.accumulatedSize += Int64(payloadSize)
+                
+                let record = FrameRecord(
+                    id: UUID(),
+                    index: self.frameCount,
+                    timestamp: timeString,
+                    sizeKB: String(format: "%.1f KB", Double(jpegData.count) / 1024.0),
+                    rawSize: jpegData.count,
+                    sha256: frameHash,
+                    previousHash: prevHash,
+                    chainHash: currentChainHash,
+                    isChainValid: true,
+                    isEncrypted: true,
+                    thumbnail: thumbnailImage,
+                    hexDump: hexBytesString,
+                    sessionID: self.sessionID,
+                    resolution: "\(width) × \(height)"
+                )
+                
+                self.records.append(record)
+                if self.records.count > 20 {
+                    self.records.removeFirst()
+                }
             }
         } catch {
             print("Frame encryption failed: \(error)")

@@ -14,6 +14,9 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     @Published public var lastSessionDuration: TimeInterval = 0
     @Published public var showMockSummary = false
     
+    @Published public var lastVideoURL: URL?
+    @Published public var lastSessionSize: Int64 = 0
+    
     private let keychainService: KeychainServiceProtocol
     private var timer: Timer?
     private var startTime: Date?
@@ -43,10 +46,29 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
                     } else {
                         self.lastSessionDuration = 0
                     }
+                    
+                    // Retrieve actual broadcast file from App Group container
+                    let groupID = "group.com.apkia.replaykitapp.shared-group"
+                    if let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID) {
+                        let videoURL = containerURL.appendingPathComponent("broadcast.mp4")
+                        if FileManager.default.fileExists(atPath: videoURL.path) {
+                            self.lastVideoURL = videoURL
+                            let attributes = try? FileManager.default.attributesOfItem(atPath: videoURL.path)
+                            self.lastSessionSize = attributes?[.size] as? Int64 ?? 0
+                        }
+                    }
                     self.showSummary = true
                 }
             }
         }
+    }
+    
+    public func deleteLocalBuffer() {
+        if let url = lastVideoURL {
+            try? FileManager.default.removeItem(at: url)
+        }
+        lastVideoURL = nil
+        lastSessionSize = 0
     }
     
     public func simulateBroadcastEnded() {
