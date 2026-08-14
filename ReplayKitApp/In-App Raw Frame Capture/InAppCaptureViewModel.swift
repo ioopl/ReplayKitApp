@@ -8,6 +8,8 @@ import UIKit
 
 @MainActor
 public class InAppCaptureViewModel: ObservableObject {
+    // Observed so changes to Settings mid-session are picked up for the *next* frame
+    private let captureSettings = CaptureSettings.shared
     @Published public var isCapturing = false
     @Published public var frameCount = 0
     @Published public var lastEncryptedSize = 0
@@ -291,13 +293,23 @@ public class InAppCaptureViewModel: ObservableObject {
         let width = CVPixelBufferGetWidth(imageBuffer)
         let height = CVPixelBufferGetHeight(imageBuffer)
         
-        // 1. Option A: Compute SHA-256 over raw pixel bytes of the captured frame
-        let frameHash = hashCVPixelBuffer(imageBuffer)
-        
-        // Convert to JPEG for size evaluation and thumbnail representation
+        // Convert to JPEG (needed for size, thumbnail, and Pipeline 2 hashing)
         let ciImage = CIImage(cvImageBuffer: imageBuffer)
         let context = CIContext(options: [.useSoftwareRenderer: false])
         guard let jpegData = context.jpegRepresentation(of: ciImage, colorSpace: CGColorSpaceCreateDeviceRGB(), options: [:]) else { return }
+        
+        // Branch: compute SHA-256 over pixel buffer (Pipeline 1) OR JPEG bytes (Pipeline 2)
+        let pipeline = captureSettings.hashingPipeline
+        let frameHash: String
+        switch pipeline {
+        case .pixelBuffer:
+            // Pipeline 1 (default): hash raw CVPixelBuffer bytes
+            frameHash = hashCVPixelBuffer(imageBuffer)
+        case .jpegFirst:
+            // Pipeline 2: encode to JPEG first, then hash compressed bytes
+            let digest = SHA256.hash(data: jpegData)
+            frameHash = digest.compactMap { String(format: "%02x", $0) }.joined()
+        }
         
         // 2. Compute Hash chain
         let prevHash = lastChainHash

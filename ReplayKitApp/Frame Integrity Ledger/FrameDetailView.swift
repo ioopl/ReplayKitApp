@@ -2,6 +2,7 @@ import SwiftUI
 
 public struct FrameDetailView: View {
     let record: FrameRecord
+    @ObservedObject private var settings = CaptureSettings.shared
     @Environment(\.dismiss) private var dismiss
     @State private var isCopied = false
     @State private var showHexPreview = false
@@ -57,9 +58,15 @@ public struct FrameDetailView: View {
                         VStack(spacing: 4) {
                             DiagramNode(label: "Frame Pixel Buffer", icon: "camera.aperture", color: .blue)
                             DiagramArrow()
-                            DiagramNode(label: "JPEG Data (\(record.sizeKB))", icon: "doc.plaintext.fill", color: .purple)
-                            DiagramArrow()
-                            DiagramNode(label: "SHA-256: \(record.sha256.prefix(8))...", icon: "key.fill", color: .orange)
+                            if settings.hashingPipeline == .pixelBuffer {
+                                DiagramNode(label: "SHA-256 (Pixel Bytes)", icon: "key.fill", color: .orange)
+                                DiagramArrow()
+                                DiagramNode(label: "JPEG Data (\(record.sizeKB))", icon: "doc.plaintext.fill", color: .purple)
+                            } else {
+                                DiagramNode(label: "JPEG Data (\(record.sizeKB))", icon: "doc.plaintext.fill", color: .purple)
+                                DiagramArrow()
+                                DiagramNode(label: "SHA-256 (JPEG Bytes)", icon: "key.fill", color: .orange)
+                            }
                             DiagramArrow()
                             DiagramNode(label: "Hash-Chain Sequence", icon: "link", color: .green)
                             DiagramArrow()
@@ -90,7 +97,9 @@ public struct FrameDetailView: View {
                         DetailGroupHeader(title: "FRAME HASH")
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("SHA-256 (Option A - Pixel Buffer)")
+                            Text(settings.hashingPipeline == .pixelBuffer
+                                 ? "Pipeline 1 — SHA-256 (Pixel Buffer)"
+                                 : "Pipeline 2 — SHA-256 (JPEG-First)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             
@@ -317,4 +326,24 @@ struct DiagramArrow: View {
             .foregroundColor(.secondary)
             .padding(.vertical, 2)
     }
+}
+
+#Preview {
+    let record = FrameRecord(
+        id: UUID(),
+        index: 1,
+        timestamp: "timeString",
+        sizeKB: String(format: "%.1f KB", Double(100000) / 1024.0),
+        rawSize: 2,
+        sha256: "frameHash",
+        previousHash: "prevHash",
+        chainHash: "currentChainHash",
+        isChainValid: true,
+        isEncrypted: true,
+        thumbnail: UIImage(systemName: "photo"),
+        hexDump: "hexBytesString",
+        sessionID: "sessionID",
+        resolution: "1024x768"
+    )
+    FrameDetailView(record: record)
 }

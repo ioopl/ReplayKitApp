@@ -3,16 +3,14 @@ import ReplayKit
 
 public struct SystemWideScreenBroadcastView: View {
     @StateObject private var viewModel = SystemWideScreenBroadcastViewModel()
-    
+    @ObservedObject private var settings = CaptureSettings.shared
+    @State private var selectedRecord: FrameRecord? = nil
+    @State private var showSettings = false
+
     public init() {}
-    
+
     public var body: some View {
         VStack(spacing: 24) {
-            Text("System-Wide Screen Broadcasting")
-                .font(.title2)
-                .bold()
-                .padding(.top)
-
             ScrollView {
                 Text("Launch the system broadcast picker to record and stream using the Broadcast Upload Extension. This option captures the entire iOS screen (Home screen, other apps, notifications). It spawns a separate system process (the Broadcast Upload Extension).")
                     .font(.body)
@@ -64,6 +62,15 @@ public struct SystemWideScreenBroadcastView: View {
                 .padding()
                 .background(Color.secondary.opacity(0.1))
                 .cornerRadius(8)
+                
+                // Broadcast Integrity Ledger (live, populated every 10 frames from App Group)
+                if viewModel.isAuthenticated {
+                    FrameIntegrityLedgerView(
+                        records: viewModel.records,
+                        pipelineLabel: settings.hashingPipeline == .pixelBuffer ? "Pipeline 1" : "Pipeline 2",
+                        selectedRecord: $selectedRecord
+                    )
+                }
             }
             .padding(.horizontal)
             
@@ -99,6 +106,7 @@ public struct SystemWideScreenBroadcastView: View {
                         .frame(width: 80, height: 80)
                     
                     Button(action: {
+                        viewModel.syncPipelineToAppGroup()
                         viewModel.showSummary = true
                     }) {
                         Label("Post-Broadcast Summary", systemImage: "sparkles")
@@ -119,6 +127,22 @@ public struct SystemWideScreenBroadcastView: View {
             }
         }
         .padding()
+        .navigationTitle("System-Wide Screen Broadcast")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showSettings = true
+                }) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.body)
+                }
+                .accessibilityLabel("Settings")
+            }
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+        }
         .sheet(isPresented: Binding(
             get: { viewModel.showSummary || viewModel.showMockSummary },
             set: { newValue in
@@ -140,6 +164,16 @@ public struct SystemWideScreenBroadcastView: View {
                     viewModel.deleteLocalBuffer()
                 }
             )
+        }
+        .sheet(item: $selectedRecord) { record in
+            FrameDetailView(record: record)
+        }
+        .onAppear {
+            // Sync pipeline setting each time this view appears so SampleHandler always has the latest
+            viewModel.syncPipelineToAppGroup()
+        }
+        .onChange(of: settings.hashingPipeline) { _ in
+            viewModel.syncPipelineToAppGroup()
         }
     }
 }
