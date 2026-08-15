@@ -46,3 +46,38 @@ Since we have already written a high-performance, optimized version of SampleHan
 5. Select KeychainService.swift in the file navigator. 
 6. Under Target Membership, check the box next to BroadcastExtension here as well (so the extension target has access to the shared keychain logic).
 ```
+
+
+## Step 3: Setup App Groups on the New Target
+
+```
+Now that the target exists, you can finish Step E:
+
+1. Select the main project root (ReplayKitApp) in the left-hand navigator.
+2. Under Targets in the sidebar, select your new BroadcastExtension target.
+3. Go to the Signing & Capabilities tab.
+4. Click + Capability (top-left) and search for App Groups.
+5. Check the box for group.com.example.shared-group to match the main app.
+```
+Q: Why are we doing all this for, I mean this whole Step 1, 2 and 3 you listed about? Whats the reason? whats the end game?
+
+Reason 1. The Ultimate End Game (System-Wide Broadcasting)
+The final goal is to allow the user to broadcast their entire iPhone screen, even when they exit your app.
+
+If we dont the moment the user minimizes your app to open a game, a browser, or their settings, the capture stops.
+
+By setting up the Broadcast Upload Extension, the user can:
+
+Tap "Start Broadcast" in our app.
+Swipe up, leave our app, and go to any other app on their phone.
+The background extension will capture their screen, encrypt it frame-by-frame, and stream it to a server, completely in the background.
+
+Reason 2. Why a Separate Target is Required (iOS Security)
+
+Apple enforces strict sandboxing. An app running in the background is not allowed to capture what is happening in other apps (to prevent malware from stealing passwords, credit cards, etc.).
+
+To get around this safely, iOS provides a dedicated system process template called a Broadcast Upload Extension.
+
+When the user starts a broadcast, iOS spawns this extension process.
+The OS feeds the screen frames directly to this extension.
+Because it is a separate target, it compiles into a separate binary that runs alongside your app.
