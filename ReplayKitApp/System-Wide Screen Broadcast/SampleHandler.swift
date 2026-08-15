@@ -139,6 +139,14 @@ public class SampleHandler: RPBroadcastSampleHandler {
         }
     }
     
+    public override func broadcastPaused() {
+        // User has requested to pause the broadcast. Samples will stop being delivered.
+    }
+    
+    public override func broadcastResumed() {
+        // User has requested to resume the broadcast. Samples delivery will resume.
+    }
+    
     private func appendFrameToAssetWriter(_ sampleBuffer: CMSampleBuffer) {
         guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
               let writer = assetWriter else { return }

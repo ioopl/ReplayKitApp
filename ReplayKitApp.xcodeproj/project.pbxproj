@@ -6,7 +6,29 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		BC19159D3030692B006F54EB /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC19159C3030692B006F54EB /* ReplayKit.framework */; };
+		BC1915A73030692B006F54EB /* ReplayKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC19159C3030692B006F54EB /* ReplayKit.framework */; };
+		BC1915A93030692B006F54EB /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC1915A83030692B006F54EB /* UIKit.framework */; };
+		BC1915B03030692B006F54EB /* BroadcastExtensionSetupUI.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BC1915A63030692B006F54EB /* BroadcastExtensionSetupUI.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BC1915B33030692B006F54EB /* BroadcastExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BC19159A3030692B006F54EB /* BroadcastExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
+		BC1915AE3030692B006F54EB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BCA5D76230162AC90078A4F1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BC1915A53030692B006F54EB;
+			remoteInfo = BroadcastExtensionSetupUI;
+		};
+		BC1915B13030692B006F54EB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BCA5D76230162AC90078A4F1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BC1915993030692B006F54EB;
+			remoteInfo = BroadcastExtension;
+		};
 		BCA5D77830162ACA0078A4F1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BCA5D76230162AC90078A4F1 /* Project object */;
@@ -23,15 +45,78 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		BC1915B43030692B006F54EB /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				BC1915B33030692B006F54EB /* BroadcastExtension.appex in Embed Foundation Extensions */,
+				BC1915B03030692B006F54EB /* BroadcastExtensionSetupUI.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		BC19159A3030692B006F54EB /* BroadcastExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BroadcastExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BC19159C3030692B006F54EB /* ReplayKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ReplayKit.framework; path = System/Library/Frameworks/ReplayKit.framework; sourceTree = SDKROOT; };
+		BC1915A63030692B006F54EB /* BroadcastExtensionSetupUI.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BroadcastExtensionSetupUI.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BC1915A83030692B006F54EB /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		BCA5D76A30162AC90078A4F1 /* ReplayKitApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ReplayKitApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCA5D77730162ACA0078A4F1 /* ReplayKitAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ReplayKitAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCA5D78130162ACA0078A4F1 /* ReplayKitAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ReplayKitAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		BC1915B93030692B006F54EB /* Exceptions for "BroadcastExtension" folder in "BroadcastExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = BC1915993030692B006F54EB /* BroadcastExtension */;
+		};
+		BC1915BB3030692B006F54EB /* Exceptions for "BroadcastExtensionSetupUI" folder in "BroadcastExtensionSetupUI" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = BC1915A53030692B006F54EB /* BroadcastExtensionSetupUI */;
+		};
+		BC1915BF30306A82006F54EB /* Exceptions for "ReplayKitApp" folder in "BroadcastExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Keychain/KeychainService.swift,
+				"System-Wide Screen Broadcast/SampleHandler.swift",
+			);
+			target = BC1915993030692B006F54EB /* BroadcastExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		BC19159E3030692B006F54EB /* BroadcastExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				BC1915B93030692B006F54EB /* Exceptions for "BroadcastExtension" folder in "BroadcastExtension" target */,
+			);
+			path = BroadcastExtension;
+			sourceTree = "<group>";
+		};
+		BC1915AA3030692B006F54EB /* BroadcastExtensionSetupUI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				BC1915BB3030692B006F54EB /* Exceptions for "BroadcastExtensionSetupUI" folder in "BroadcastExtensionSetupUI" target */,
+			);
+			path = BroadcastExtensionSetupUI;
+			sourceTree = "<group>";
+		};
 		BCA5D76C30162AC90078A4F1 /* ReplayKitApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				BC1915BF30306A82006F54EB /* Exceptions for "ReplayKitApp" folder in "BroadcastExtension" target */,
+			);
 			path = ReplayKitApp;
 			sourceTree = "<group>";
 		};
@@ -48,6 +133,23 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		BC1915973030692B006F54EB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BC19159D3030692B006F54EB /* ReplayKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BC1915A33030692B006F54EB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BC1915A73030692B006F54EB /* ReplayKit.framework in Frameworks */,
+				BC1915A93030692B006F54EB /* UIKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BCA5D76730162AC90078A4F1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -72,12 +174,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		BC19159B3030692B006F54EB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				BC19159C3030692B006F54EB /* ReplayKit.framework */,
+				BC1915A83030692B006F54EB /* UIKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		BCA5D76130162AC90078A4F1 = {
 			isa = PBXGroup;
 			children = (
 				BCA5D76C30162AC90078A4F1 /* ReplayKitApp */,
 				BCA5D77A30162ACA0078A4F1 /* ReplayKitAppTests */,
 				BCA5D78430162ACA0078A4F1 /* ReplayKitAppUITests */,
+				BC19159E3030692B006F54EB /* BroadcastExtension */,
+				BC1915AA3030692B006F54EB /* BroadcastExtensionSetupUI */,
+				BC19159B3030692B006F54EB /* Frameworks */,
 				BCA5D76B30162AC90078A4F1 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +202,8 @@
 				BCA5D76A30162AC90078A4F1 /* ReplayKitApp.app */,
 				BCA5D77730162ACA0078A4F1 /* ReplayKitAppTests.xctest */,
 				BCA5D78130162ACA0078A4F1 /* ReplayKitAppUITests.xctest */,
+				BC19159A3030692B006F54EB /* BroadcastExtension.appex */,
+				BC1915A63030692B006F54EB /* BroadcastExtensionSetupUI.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,6 +211,50 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		BC1915993030692B006F54EB /* BroadcastExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BC1915BA3030692B006F54EB /* Build configuration list for PBXNativeTarget "BroadcastExtension" */;
+			buildPhases = (
+				BC1915963030692B006F54EB /* Sources */,
+				BC1915973030692B006F54EB /* Frameworks */,
+				BC1915983030692B006F54EB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				BC19159E3030692B006F54EB /* BroadcastExtension */,
+			);
+			name = BroadcastExtension;
+			packageProductDependencies = (
+			);
+			productName = BroadcastExtension;
+			productReference = BC19159A3030692B006F54EB /* BroadcastExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		BC1915A53030692B006F54EB /* BroadcastExtensionSetupUI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BC1915BC3030692B006F54EB /* Build configuration list for PBXNativeTarget "BroadcastExtensionSetupUI" */;
+			buildPhases = (
+				BC1915A23030692B006F54EB /* Sources */,
+				BC1915A33030692B006F54EB /* Frameworks */,
+				BC1915A43030692B006F54EB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				BC1915AA3030692B006F54EB /* BroadcastExtensionSetupUI */,
+			);
+			name = BroadcastExtensionSetupUI;
+			packageProductDependencies = (
+			);
+			productName = BroadcastExtensionSetupUI;
+			productReference = BC1915A63030692B006F54EB /* BroadcastExtensionSetupUI.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		BCA5D76930162AC90078A4F1 /* ReplayKitApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BCA5D78B30162ACA0078A4F1 /* Build configuration list for PBXNativeTarget "ReplayKitApp" */;
@@ -102,10 +262,13 @@
 				BCA5D76630162AC90078A4F1 /* Sources */,
 				BCA5D76730162AC90078A4F1 /* Frameworks */,
 				BCA5D76830162AC90078A4F1 /* Resources */,
+				BC1915B43030692B006F54EB /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				BC1915AF3030692B006F54EB /* PBXTargetDependency */,
+				BC1915B23030692B006F54EB /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				BCA5D76C30162AC90078A4F1 /* ReplayKitApp */,
@@ -173,6 +336,12 @@
 				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
+					BC1915993030692B006F54EB = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
+					BC1915A53030692B006F54EB = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
 					BCA5D76930162AC90078A4F1 = {
 						CreatedOnToolsVersion = 26.4.1;
 					};
@@ -203,11 +372,27 @@
 				BCA5D76930162AC90078A4F1 /* ReplayKitApp */,
 				BCA5D77630162ACA0078A4F1 /* ReplayKitAppTests */,
 				BCA5D78030162ACA0078A4F1 /* ReplayKitAppUITests */,
+				BC1915993030692B006F54EB /* BroadcastExtension */,
+				BC1915A53030692B006F54EB /* BroadcastExtensionSetupUI */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		BC1915983030692B006F54EB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BC1915A43030692B006F54EB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BCA5D76830162AC90078A4F1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -232,6 +417,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		BC1915963030692B006F54EB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BC1915A23030692B006F54EB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BCA5D76630162AC90078A4F1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -256,6 +455,16 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		BC1915AF3030692B006F54EB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BC1915A53030692B006F54EB /* BroadcastExtensionSetupUI */;
+			targetProxy = BC1915AE3030692B006F54EB /* PBXContainerItemProxy */;
+		};
+		BC1915B23030692B006F54EB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BC1915993030692B006F54EB /* BroadcastExtension */;
+			targetProxy = BC1915B13030692B006F54EB /* PBXContainerItemProxy */;
+		};
 		BCA5D77930162ACA0078A4F1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = BCA5D76930162AC90078A4F1 /* ReplayKitApp */;
@@ -269,6 +478,118 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		BC1915B53030692B006F54EB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 83P7Q7YP3W;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BroadcastExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BroadcastExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.apkia.replaykitapp.BroadcastExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BC1915B63030692B006F54EB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 83P7Q7YP3W;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BroadcastExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BroadcastExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.apkia.replaykitapp.BroadcastExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		BC1915B73030692B006F54EB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 83P7Q7YP3W;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BroadcastExtensionSetupUI/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BroadcastExtensionSetupUI;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.apkia.replaykitapp.BroadcastExtensionSetupUI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BC1915B83030692B006F54EB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 83P7Q7YP3W;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BroadcastExtensionSetupUI/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BroadcastExtensionSetupUI;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.apkia.replaykitapp.BroadcastExtensionSetupUI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		BCA5D78930162ACA0078A4F1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -549,6 +870,24 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		BC1915BA3030692B006F54EB /* Build configuration list for PBXNativeTarget "BroadcastExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BC1915B53030692B006F54EB /* Debug */,
+				BC1915B63030692B006F54EB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BC1915BC3030692B006F54EB /* Build configuration list for PBXNativeTarget "BroadcastExtensionSetupUI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BC1915B73030692B006F54EB /* Debug */,
+				BC1915B83030692B006F54EB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		BCA5D76530162AC90078A4F1 /* Build configuration list for PBXProject "ReplayKitApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
