@@ -10,7 +10,8 @@ public struct SystemWideScreenBroadcastView: View {
     public init() {}
 
     public var body: some View {
-        VStack(spacing: 24) {
+        ScrollView {
+            VStack(spacing: 24) {
             ScrollView {
                 Text("Launch the system broadcast picker to record and stream using the Broadcast Upload Extension. This option captures the entire iOS screen (Home screen, other apps, notifications). It spawns a separate system process (the Broadcast Upload Extension).")
                     .font(.body)
@@ -63,14 +64,14 @@ public struct SystemWideScreenBroadcastView: View {
                 .background(Color.secondary.opacity(0.1))
                 .cornerRadius(8)
                 
-                // Broadcast Integrity Ledger (live, populated every 10 frames from App Group)
-                if viewModel.isAuthenticated {
-                    FrameIntegrityLedgerView(
-                        records: viewModel.records,
-                        pipelineLabel: settings.hashingPipeline == .pixelBuffer ? "Pipeline 1" : "Pipeline 2",
-                        selectedRecord: $selectedRecord
-                    )
-                }
+                // Broadcast Integrity Ledger (live, populated every 10 frames from App Group).
+                // Keep the ledger visible before authentication so users can see where the
+                // broadcast integrity records will appear once the extension starts writing them.
+                FrameIntegrityLedgerView(
+                    records: viewModel.records,
+                    pipelineLabel: settings.hashingPipeline == .pixelBuffer ? "Pipeline 1" : "Pipeline 2 (JPEG-First)",
+                    selectedRecord: $selectedRecord
+                )
             }
             .padding(.horizontal)
             
@@ -172,8 +173,9 @@ public struct SystemWideScreenBroadcastView: View {
             // Sync pipeline setting each time this view appears so SampleHandler always has the latest
             viewModel.syncPipelineToAppGroup()
         }
-        .onChange(of: settings.hashingPipeline) { _ in
-            viewModel.syncPipelineToAppGroup()
+            .onChange(of: settings.hashingPipeline) { _ in
+                viewModel.syncPipelineToAppGroup()
+            }
         }
     }
 }

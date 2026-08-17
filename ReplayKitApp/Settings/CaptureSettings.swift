@@ -21,9 +21,9 @@ public enum HashingPipeline: String, CaseIterable {
     public var description: String {
         switch self {
         case .pixelBuffer:
-            return "SHA-256 is computed directly over the raw, uncompressed CVPixelBuffer bytes — identical to what the sensor captured. Highest fidelity, largest data surface."
+            return "SHA-256 is computed directly over the raw, uncompressed CVPixelBuffer bytes, identical to what the sensor captured. Highest fidelity, largest data surface."
         case .jpegFirst:
-            return "The frame is JPEG-encoded first, then SHA-256 is computed over the compressed bytes — matching the actual payload that would be transmitted or stored."
+            return "The frame is JPEG-encoded first, then SHA-256 is computed over the compressed bytes, matching the actual payload that would be transmitted or stored."
         }
     }
 }
