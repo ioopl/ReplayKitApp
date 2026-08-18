@@ -489,6 +489,7 @@
 				INFOPLIST_FILE = BroadcastExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BroadcastExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -518,6 +519,7 @@
 				INFOPLIST_FILE = BroadcastExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BroadcastExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -546,6 +548,7 @@
 				INFOPLIST_FILE = BroadcastExtensionSetupUI/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BroadcastExtensionSetupUI;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -574,6 +577,7 @@
 				INFOPLIST_FILE = BroadcastExtensionSetupUI/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BroadcastExtensionSetupUI;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -721,11 +725,12 @@
 				CODE_SIGN_ENTITLEMENTS = ReplayKitApp/ReplayKitApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "ReplayKitApp/docs/Initial_Idea.md ReplayKitApp/docs ReplayKitApp/docs/Files\\ 1.png ReplayKitApp/docs/App\\ Groups\\ &\\ Keychain\\ Sharing.png ReplayKitApp/docs/Architecture.png ReplayKitApp/docs/C\\ -\\ In\\ App\\ Screen\\ Broadcast\\ -\\ Clarification.png ReplayKitApp/docs/Files\\ 2.png ReplayKitApp/docs/B\\ vs\\ C\\ -\\ In-App\\ Broadcast\\ (C)\\ vs.\\ In-App\\ Raw\\ Frame\\ Capture\\ (B).png";
+				DEVELOPMENT_ASSET_PATHS = ReplayKitApp/docs/;
 				DEVELOPMENT_TEAM = 83P7Q7YP3W;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Please Allow App to authenticate via Biometrics";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Allow ReplayKit App to save completed broadcasts to Photos.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -757,11 +762,12 @@
 				CODE_SIGN_ENTITLEMENTS = ReplayKitApp/ReplayKitApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "ReplayKitApp/docs/Initial_Idea.md ReplayKitApp/docs ReplayKitApp/docs/Files\\ 1.png ReplayKitApp/docs/App\\ Groups\\ &\\ Keychain\\ Sharing.png ReplayKitApp/docs/Architecture.png ReplayKitApp/docs/C\\ -\\ In\\ App\\ Screen\\ Broadcast\\ -\\ Clarification.png ReplayKitApp/docs/Files\\ 2.png ReplayKitApp/docs/B\\ vs\\ C\\ -\\ In-App\\ Broadcast\\ (C)\\ vs.\\ In-App\\ Raw\\ Frame\\ Capture\\ (B).png";
+				DEVELOPMENT_ASSET_PATHS = ReplayKitApp/docs/;
 				DEVELOPMENT_TEAM = 83P7Q7YP3W;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Please Allow App to authenticate via Biometrics";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Allow ReplayKit App to save completed broadcasts to Photos.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

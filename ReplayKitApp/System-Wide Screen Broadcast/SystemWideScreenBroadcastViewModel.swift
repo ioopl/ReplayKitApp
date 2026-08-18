@@ -2,7 +2,7 @@ import Foundation
 import Combine
 import LocalAuthentication
 import ReplayKit
-import UIKit
+//import UIKit
 
 @MainActor
 public class SystemWideScreenBroadcastViewModel: ObservableObject {
@@ -17,17 +17,24 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     
     @Published public var lastVideoURL: URL?
     @Published public var lastSessionSize: Int64 = 0
+    @Published public var photosSaveMessage: String?
     
     /// Frame records read from the shared App Group UserDefaults (written by SampleHandler every 10 frames)
     @Published public var records: [FrameRecord] = []
     
     private let keychainService: KeychainServiceProtocol
+    private let photosLibraryService: PhotosLibraryServiceProtocol
     private var pollingTimer: Timer?
     private var startTime: Date?
     private let groupID = "group.com.apkia.replaykitapp.shared-group"
     
-    public init(keychainService: KeychainServiceProtocol = SharedKeychainManager.shared) {
+    @MainActor
+    public init(
+        keychainService: KeychainServiceProtocol = SharedKeychainManager.shared,
+        photosLibraryService: PhotosLibraryServiceProtocol? = nil
+    ) {
         self.keychainService = keychainService
+        self.photosLibraryService = photosLibraryService ?? PhotosLibraryService.shared
         startMonitoringBroadcast()
     }
     
@@ -42,32 +49,33 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
         pollingTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self = self else { return }
-                let active = RPScreenRecorder.shared().isRecording
+                let defaults = UserDefaults(suiteName: self.groupID)
+                let extensionActive = defaults?.bool(forKey: "broadcastActive") == true
+                let extensionFinished = defaults?.bool(forKey: "broadcastFinished") == true
+                // The Broadcast Upload Extension is a separate process, so the host app's
+                // RPScreenRecorder state is not a reliable lifecycle signal by itself.
+                let active = RPScreenRecorder.shared().isRecording || extensionActive
                 if active && !self.isBroadcasting {
                     self.isBroadcasting = true
                     self.startTime = Date()
                     self.records.removeAll()
-                } else if !active && self.isBroadcasting {
+                    self.lastVideoURL = nil
+                    self.lastSessionSize = 0
+                    self.photosSaveMessage = nil
+                } else if self.isBroadcasting && (!active || extensionFinished) {
                     self.isBroadcasting = false
                     if let start = self.startTime {
                         self.lastSessionDuration = Date().timeIntervalSince(start)
                     } else {
                         self.lastSessionDuration = 0
                     }
-                    
-                    // Retrieve actual broadcast file from App Group container
-                    if let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: self.groupID) {
-                        let videoURL = containerURL.appendingPathComponent("broadcast.mp4")
-                        if FileManager.default.fileExists(atPath: videoURL.path) {
-                            self.lastVideoURL = videoURL
-                            let attributes = try? FileManager.default.attributesOfItem(atPath: videoURL.path)
-                            self.lastSessionSize = attributes?[.size] as? Int64 ?? 0
-                        }
+
+                    // The extension finishes AVAssetWriter asynchronously after ReplayKit
+                    // reports that recording has stopped. Wait for its completion marker
+                    // before reading or exporting the file.
+                    Task { @MainActor in
+                        await self.finalizeBroadcastOutput()
                     }
-                    
-                    // Load any remaining frame metadata
-                    self.loadFrameMetadata()
-                    self.showSummary = true
                 }
                 
                 // While broadcasting: poll frame metadata every tick
@@ -129,7 +137,43 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
         if newRecords.count > 20 { newRecords = Array(newRecords.suffix(20)) }
         records = newRecords
     }
-    
+
+    /// Wait for the Broadcast Upload Extension to finish its App Group MP4, then make an
+    /// explicit Photos-library copy. Broadcast extensions do not save captured samples to
+    /// Photos automatically because they are separate processes from the host app.
+    private func finalizeBroadcastOutput() async {
+        let finishedKey = "broadcastFinished"
+        let defaults = UserDefaults(suiteName: groupID)
+        let fileURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID)?.appendingPathComponent("broadcast.mp4")
+
+        for _ in 0..<12 {
+            let isFinished = defaults?.bool(forKey: finishedKey) == true
+            let hasFile = fileURL.map { FileManager.default.fileExists(atPath: $0.path) } == true
+            if isFinished && hasFile {
+                break
+            }
+            try? await Task.sleep(nanoseconds: 250_000_000)
+        }
+
+        if let fileURL,
+           FileManager.default.fileExists(atPath: fileURL.path) {
+            lastVideoURL = fileURL
+            let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path)
+            lastSessionSize = attributes?[.size] as? Int64 ?? 0
+            do {
+                try await photosLibraryService.saveVideo(at: fileURL)
+                photosSaveMessage = "Broadcast saved to Photos."
+            } catch {
+                photosSaveMessage = "Could not save the broadcast to Photos: \(error.localizedDescription)"
+            }
+        } else {
+            photosSaveMessage = "The broadcast video was not available to save."
+        }
+
+        loadFrameMetadata()
+        showSummary = true
+    }
+
     // MARK: - Actions
     
     public func deleteLocalBuffer() {

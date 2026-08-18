@@ -1,6 +1,5 @@
-As an expert Senior iOS Engineer specializing in iOS Security, Bluetooth Low Energy (BLE) and Low-latency multimedia streaming. 
+# A Swift project targeting iOS 17+ that mirrors a production high-security broadcasting client to demo the use of Apple ReplayKit API. 
 
-Will create a Swift sample project targeting iOS 17+ that mirrors a production high-security broadcasting client to demo the use of Apple ReplayKit API. Initally we will built for the iOS and then later extend that for the macOS App.  
 
 We will demo 4 things so on Home Screen we need to have these 4 links to demo each feature when the user taps on it.  
 
@@ -18,13 +17,13 @@ Note : We will create a placeholder where we we would add the URL should we need
 
 The project would also demonstrate three key architecture principles :
 
-1. Inter-Process Communication (IPC) & Shared Keychain using App Groups between a Host App and a Broadcast Upload Extension.
+## 1. Inter-Process Communication (IPC) & Shared Keychain using App Groups between a Host App and a Broadcast Upload Extension.
 
-2. Secure Enclave interaction utilizing hardware-bound keys and CryptoKit for high-performance symmetric frame encryption.
+## 2. Secure Enclave interaction utilizing hardware-bound keys and CryptoKit for high-performance symmetric frame encryption.
 
-3. Low-Memory optimization techniques inside a ReplayKit Broadcast Extension to completely prevent out-of-memory (OOM) crashes under a strict 50MB constraint.
+## 3. Low-Memory optimization techniques inside a ReplayKit Broadcast Extension to completely prevent out-of-memory (OOM) crashes under a strict 50MB constraint.
 
-I will structure the project into the following files and integration steps:
+# Project Structure 
 
 FILE 1: SharedKeychainManager.swift
 A utility class accessible by both targets. It must include:
@@ -48,25 +47,12 @@ XCODE CONFIGURATION GUIDE:
 A precise, bulleted checklist detailing how to set up the App Groups identifier (`group.com.example...`), configure entitlements on both the App and the Extension targets, and correctly configure the Info.plist settings for the Extension (`RPBroadcastProcessMode = KeyFrame`).
 
 
-Some files I found online with the help of Gemini on Web 
 
-```
-Part 1: Architecture & Code Implementation
+# Architecture & Code Implementation
 
 1. Sharing the Keychain via App Groups To pass encryption keys between our Main App and the Broadcast Extension, we must use a shared Keychain Access Group. The key created in the Secure Enclave must also be configured so that the extension can access its cryptographic operations.
-
 KeychainManager.swift file 
-```
 
-```
 2. ReplayKit Sample Buffer Handling & Memory ManagementInside your SampleHandler (Broadcast Extension), processing video frames without leaking memory is critical due to the 50MB operating limit. We must wrap frame manipulation inside an autoreleasepool and drop frames if the encryption pipeline backs up.
 
 SampleHandler.swift file 
-```
-
-```
-References: 
-I am following these WWDC videos - tutorials 
-https://developer.apple.com/videos/play/wwdc2021/10101/
-https://developer.apple.com/la/videos/play/wwdc2020/10633/
-```

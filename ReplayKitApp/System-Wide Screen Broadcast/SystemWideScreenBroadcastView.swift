@@ -81,6 +81,14 @@ public struct SystemWideScreenBroadcastView: View {
                     .font(.caption)
                     .padding()
             }
+
+            if let photosSaveMessage = viewModel.photosSaveMessage {
+                Text(photosSaveMessage)
+                    .foregroundColor(photosSaveMessage == "Broadcast saved to Photos." ? .green : .orange)
+                    .font(.caption)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
             
             Spacer()
             
@@ -184,8 +192,9 @@ struct BroadcastPickerRepresentable: UIViewRepresentable {
     func makeUIView(context: Context) -> RPSystemBroadcastPickerView {
         let picker = RPSystemBroadcastPickerView(frame: CGRect(x: 0, y: 0, width: 80, height: 80))
         picker.showsMicrophoneButton = true
-        // Set this to our actual Broadcast Extension bundle ID
-        picker.preferredExtension = "com.example.ReplayKitApp.BroadcastExtension"
+        // This must match the BroadcastExtension target's PRODUCT_BUNDLE_IDENTIFIER
+        // Set this to actual Broadcast Extension bundle ID
+        picker.preferredExtension = "com.apkia.replaykitapp.BroadcastExtension"
         return picker
     }
     

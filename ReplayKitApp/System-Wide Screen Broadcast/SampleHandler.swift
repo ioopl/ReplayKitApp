@@ -57,6 +57,7 @@ public class SampleHandler: RPBroadcastSampleHandler {
         if let defaults = UserDefaults(suiteName: groupID) {
             defaults.removeObject(forKey: "frameMetadata")
             defaults.set(false, forKey: "broadcastFinished")
+            defaults.set(true, forKey: "broadcastActive")
             defaults.synchronize()
         }
         
@@ -134,6 +135,7 @@ public class SampleHandler: RPBroadcastSampleHandler {
         
         // Signal host app that broadcast has finished
         if let defaults = UserDefaults(suiteName: groupID) {
+            defaults.set(false, forKey: "broadcastActive")
             defaults.set(true, forKey: "broadcastFinished")
             defaults.synchronize()
         }

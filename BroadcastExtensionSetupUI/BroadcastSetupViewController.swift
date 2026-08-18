@@ -6,8 +6,21 @@
 //
 
 import ReplayKit
+import UIKit
 
 class BroadcastSetupViewController: UIViewController {
+
+    private var didCompleteSetup = false
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+        // This setup extension has no user-configurable fields. ReplayKit requires the
+        // setup request to be explicitly completed before it starts SampleHandler.
+        guard !didCompleteSetup else { return }
+        didCompleteSetup = true
+        userDidFinishSetup()
+    }
 
     // Call this method when the user has finished interacting with the view controller and a broadcast stream can start
     func userDidFinishSetup() {
