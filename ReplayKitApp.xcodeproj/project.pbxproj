@@ -93,6 +93,13 @@
 			);
 			target = BC1915993030692B006F54EB /* BroadcastExtension */;
 		};
+		BC1916D13035AF28006F54EB /* Exceptions for "ReplayKitApp" folder in "ReplayKitApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"docs/@MainActor.png",
+			);
+			target = BCA5D76930162AC90078A4F1 /* ReplayKitApp */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -115,6 +122,7 @@
 		BCA5D76C30162AC90078A4F1 /* ReplayKitApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				BC1916D13035AF28006F54EB /* Exceptions for "ReplayKitApp" folder in "ReplayKitApp" target */,
 				BC1915BF30306A82006F54EB /* Exceptions for "ReplayKitApp" folder in "BroadcastExtension" target */,
 			);
 			path = ReplayKitApp;
