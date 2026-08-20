@@ -43,7 +43,7 @@ struct ContentView: View {
                     VStack(spacing: 16) {
                         NavigationLink(destination: InAppRecordingView()) {
                             MenuCard(
-                                title: "A) In-App Screen Recording",
+                                title: "A) In-App Screen Recording (as .MP4)",
                                 subtitle: "Record screen and present default video editor preview. Produce a local, fully finished MP4 video file.",
                                 icon: "record.circle",
                                 color: .red
@@ -52,7 +52,7 @@ struct ContentView: View {
                         
                         NavigationLink(destination: InAppCaptureView()) {
                             MenuCard(
-                                title: "B) In-App Raw Frame Capture",
+                                title: "B) In-App Screen Recording (In-App Raw Frame Capture)",
                                 subtitle: "Capture raw screen buffers and encrypt them in real time using CryptoKit AES-GCM. \nLive Streaming. \nRemote Assistance & Screen Sharing. \nReal-time Video Processing.",
                                 icon: "camera.aperture",
                                 color: .green

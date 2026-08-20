@@ -1,4 +1,4 @@
-#  In-App Screen Recording or In-App Raw Frame Capture
+#  In-App Screen Recording as In-App Raw Frame Capture
  
 ## 1. What is the practical use case for this?
 
