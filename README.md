@@ -1,8 +1,10 @@
 # So what exactly is the main difference between the Replaykit in App Raw Frame Capture (Option B) vs System Wide Screen Broadcast (Option C)
 
+Also See for details (System-Wide Screen Broadcast)[./System-Wide Screen Broadcast/README-C.md]
+
 The main difference is scope and execution context: In-App Raw Frame Capture (RPScreenRecorder) runs directly inside your app's main process to grab only your app's visual contents while it is open, whereas a System-Wide Screen Broadcast runs out-of-process via a Broadcast Extension initiated from the Control Center to capture the entire device screen.
 
-## In-App Raw Screen Broadcast (Frame Capture) (Option B)
+## In-App Raw Screen Broadcast (In-App Raw Frame Capture) (Option B)
 
 Scope: Restricted strictly to your app's own UI and audio. If the user goes to the home screen or opens another app, capture stops.
 

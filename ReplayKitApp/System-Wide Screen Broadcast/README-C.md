@@ -1,16 +1,44 @@
-# Why this setup i.e. "1. Create the Broadcast Extension Target", "2. App Groups - As a New Capability" and what the ultimate end game is for a system-wide broadcasting architecture:
+ # "1. What is the Ultimate End Game is for this System-Wide Screen Broadcasting architecture.
+# Why this setup needs: 
+# "2. Create the Broadcast Extension Target" 
+# "3. App Groups - As a New Capability" 
 
-1. The Ultimate End Game for System-Wide Broadcasting (Option C)
+
+## 1. The Ultimate End Game for System-Wide Screen Broadcasting (Option C)
 
 The final goal is to allow the user to broadcast their entire iPhone screen, even when they exit this App.
 
-If we only use in-App capture (Option B), the moment the user minimizes our App to open a game, a browser, or their settings, the capture stops.
+If we dont the moment the user minimizes your app to open a game, a browser, or their settings, the capture stops.
 
-By setting up the Broadcast Upload Extension, the user can:
+
+## 2. By setting up the Broadcast Upload Extension, the user can:
 
 1. Tap "Start Broadcast" in the App.
 2. Swipe up, leave our app, and go to any other App on their phone.
 3. The background extension will capture their screen, encrypt it frame-by-frame, and stream it to a server, completely in the background.
+
+## Why a Separate Target is Required (iOS Security)
+
+Apple enforces strict sandboxing. An app running in the background is not allowed to capture what is happening in other apps (to prevent malware from stealing passwords, credit cards, etc.).
+
+To get around this safely, iOS provides a dedicated system process template called a Broadcast Upload Extension.
+
+When the user starts a broadcast, iOS spawns this extension process.
+The OS feeds the screen frames directly to this extension.
+Because it is a separate target, it compiles into a separate binary that runs alongside your app.
+
+
+## 3. App Group Lifecycle
+
+App Group lifecycle markers: broadcastActive and broadcastFinished
+
+- SampleHandler now writes broadcastActive and broadcastFinished to the App Group.
+- The host app monitors those markers instead of relying only on RPScreenRecorder.isRecording.
+- Photos export only starts after broadcastFinished is set.
+- The Photos permission remains correctly isolated inside the injected Photos service.
+- The new BroadcastExtension target does not itself require Photos permission. The host app requests Photos access because it owns the export to the user’s Photos library.
+- When debugging, ensure the BroadcastExtension target is embedded and use an actual device. Since the extension runs as a separate process, Xcode may need to attach to the BroadcastExtension process before broadcastFinished() breakpoints are hit.
+
 
 
 -----------------------------------------------------------------------------------------

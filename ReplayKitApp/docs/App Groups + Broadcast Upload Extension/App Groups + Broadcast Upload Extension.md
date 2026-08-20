@@ -61,36 +61,4 @@ Now that the target exists, you can finish Step E:
 ```
 
 # Q: Why are we doing all this for, I mean this whole Step 1, 2 and 3 you listed about? Whats the reason? whats the end game?
-
-## Reason 1. The Ultimate End Game (System-Wide Broadcasting)
-The final goal is to allow the user to broadcast their entire iPhone screen, even when they exit your app.
-
-If we dont the moment the user minimizes your app to open a game, a browser, or their settings, the capture stops.
-
-By setting up the Broadcast Upload Extension, the user can:
-
-Tap "Start Broadcast" in our app.
-Swipe up, leave our app, and go to any other app on their phone.
-The background extension will capture their screen, encrypt it frame-by-frame, and stream it to a server, completely in the background.
-
-## Reason 2. Why a Separate Target is Required (iOS Security)
-
-Apple enforces strict sandboxing. An app running in the background is not allowed to capture what is happening in other apps (to prevent malware from stealing passwords, credit cards, etc.).
-
-To get around this safely, iOS provides a dedicated system process template called a Broadcast Upload Extension.
-
-When the user starts a broadcast, iOS spawns this extension process.
-The OS feeds the screen frames directly to this extension.
-Because it is a separate target, it compiles into a separate binary that runs alongside your app.
-
-
-## App Group Lifecycle
-
-App Group lifecycle markers: broadcastActive and broadcastFinished
-
-- SampleHandler now writes broadcastActive and broadcastFinished to the App Group.
-- The host app monitors those markers instead of relying only on RPScreenRecorder.isRecording.
-- Photos export only starts after broadcastFinished is set.
-- The Photos permission remains correctly isolated inside the injected Photos service.
-- The new BroadcastExtension target does not itself require Photos permission. The host app requests Photos access because it owns the export to the user’s Photos library.
-- When debugging, ensure the BroadcastExtension target is embedded and use an actual device. Since the extension runs as a separate process, Xcode may need to attach to the BroadcastExtension process before broadcastFinished() breakpoints are hit.
+See for details (System-Wide Screen Broadcast)[./System-Wide Screen Broadcast/README-C.md]
