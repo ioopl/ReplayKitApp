@@ -1,15 +1,14 @@
-#  InAppCaptureViewModel.swift &  InAppCaptureView.swift
+#  In-App Screen Recording or In-App Raw Frame Capture
  
-## Captures raw CMSampleBuffer frames, converts them using GPU acceleration via CIContext, and encrypts them using CryptoKit AES-GCM.
+## 1. What is the practical use case for this?
 
-A detailed breakdown of Feature B (In-App Raw Frame Capture), how it operates under the hood, and its practical applications.
 
-#1. What is the practical use case for this?
+## In many production scenarios, you don't want a simple .MP4 file. Instead, we need the raw video feed in real time. So this Option B (In-App Raw Frame Capture) is designed for this scenario. This Option B) is for recording only whats visible in this App screen and then we can stream it etc, even convert that to an .MP4 if needed like Option A).  
+ 
+## Under the Hood: It Captures raw CMSampleBuffer frames, converts them using GPU acceleration via CIContext, and encrypts them using CryptoKit AES-GCM.
 
-Option A (In-App Screen Recording) is designed to produce a local, fully finished MP4 video file.
+## A detailed breakdown of this Option B (In-App Raw Frame Capture), how it operates under the hood, and its practical applications:
 
-However, in many production scenarios, you don't want a file. Instead, you need the raw video feed in real time. 
-So Option B (In-App Raw Frame Capture) is designed for these scenarios:
 
 A) Custom Low-Latency Live Streaming: Sending the screen frames directly over a WebRTC or gRPC pipeline to a streaming platform (like Twitch, YouTube Live, or an enterprise webinar tool).
 
@@ -46,4 +45,7 @@ In a production system, instead of discarding the encryptedPayload, we would pas
 
 Since there is no backend server connected yet, the demo simply outputs performance metrics (how many frames were successfully processed and the payload size of the last encrypted frame) to prove the pipeline is active and encrypting at low latency.
 
+
+Main files are :
+InAppCaptureViewModel.swift &  InAppCaptureView.swift
 
