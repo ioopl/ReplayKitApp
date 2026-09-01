@@ -273,7 +273,7 @@ public class InAppCaptureViewModel: ObservableObject {
         let ciImage = CIImage(cvImageBuffer: imageBuffer)
         let width = CGFloat(CVPixelBufferGetWidth(imageBuffer))
         guard width > 0 else { return nil }
-        let scale: CGFloat = 80.0 / width
+        let scale: CGFloat = 360.0 / width
         let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         let context = CIContext(options: [.useSoftwareRenderer: false])
         if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {

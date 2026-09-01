@@ -245,8 +245,8 @@ public class SampleHandler: RPBroadcastSampleHandler {
             let width = CVPixelBufferGetWidth(imageBuffer)
             let height = CVPixelBufferGetHeight(imageBuffer)
             
-            // Scale thumbnail to 80px wide
-            let scale: CGFloat = 80.0 / CGFloat(width)
+            // Scale thumbnail to 360px wide for crisp enlarged preview
+            let scale: CGFloat = 360.0 / CGFloat(width)
             let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
             var thumbBase64: String = ""
             if let cgImg = context.createCGImage(scaledImage, from: scaledImage.extent),

@@ -6,6 +6,7 @@ public struct FrameDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isCopied = false
     @State private var showHexPreview = false
+    @State private var showEnlargedImage = false
     
     public init(record: FrameRecord) {
         self.record = record
@@ -27,15 +28,35 @@ public struct FrameDetailView: View {
                     // 1. Frame Preview Thumbnail Card
                     VStack(spacing: 12) {
                         if let img = record.thumbnail {
-                            Image(uiImage: img)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(height: 160)
-                                .cornerRadius(12)
-                                .shadow(radius: 4)
+                            Button(action: {
+                                showEnlargedImage = true
+                            }) {
+                                ZStack(alignment: .bottomTrailing) {
+                                    Image(uiImage: img)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(height: 160)
+                                        .cornerRadius(12)
+                                        .shadow(radius: 4)
+                                    
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                            .font(.caption2)
+                                        Text("Enlarge")
+                                            .font(.caption2.bold())
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.black.opacity(0.7))
+                                    .cornerRadius(8)
+                                    .padding(8)
+                                }
                                 .padding()
                                 .background(Color(.secondarySystemBackground))
                                 .cornerRadius(16)
+                            }
+                            .buttonStyle(.plain)
                         } else {
                             RoundedRectangle(cornerRadius: 16)
                                 .fill(Color(.secondarySystemBackground))
@@ -268,6 +289,59 @@ public struct FrameDetailView: View {
                     .bold()
                 }
             }
+            .fullScreenCover(isPresented: $showEnlargedImage) {
+                if let img = record.thumbnail {
+                    EnlargedFrameView(image: img, record: record)
+                }
+            }
+        }
+    }
+}
+
+struct EnlargedFrameView: View {
+    let image: UIImage
+    let record: FrameRecord
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                
+                VStack(spacing: 16) {
+                    Spacer()
+                    
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .cornerRadius(8)
+                        .padding()
+                    
+                    Spacer()
+                    
+                    VStack(spacing: 6) {
+                        Text("Resolution: \(record.resolution)  |  Size: \(record.sizeKB)")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        Text("Timestamp: \(record.timestamp)")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.bottom, 20)
+                }
+            }
+            .navigationTitle("Frame #\(record.index)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: ToolbarPlacement.automatic)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .bold()
+                    .foregroundColor(.white)
+                }
+            }
         }
     }
 }
@@ -346,4 +420,24 @@ struct DiagramArrow: View {
         resolution: "1024x768"
     )
     FrameDetailView(record: record)
+}
+
+#Preview {
+    let record = FrameRecord(
+        id: UUID(),
+        index: 1,
+        timestamp: "timeString",
+        sizeKB: String(format: "%.1f KB", Double(100000) / 1024.0),
+        rawSize: 2,
+        sha256: "frameHash",
+        previousHash: "prevHash",
+        chainHash: "currentChainHash",
+        isChainValid: true,
+        isEncrypted: true,
+        thumbnail: UIImage(systemName: "photo"),
+        hexDump: "hexBytesString",
+        sessionID: "sessionID",
+        resolution: "1024x768"
+    )
+    EnlargedFrameView(image: UIImage(systemName: "arrow.down")!, record: record)
 }
