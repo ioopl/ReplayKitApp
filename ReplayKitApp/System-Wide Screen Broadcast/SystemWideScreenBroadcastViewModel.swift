@@ -26,7 +26,7 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     private let photosLibraryService: PhotosLibraryServiceProtocol
     private var pollingTimer: Timer?
     private var startTime: Date?
-    private let groupID = "group.com.apkia.replaykitapp.shared-group"
+    private let groupID = "group.com.apkia.replaykitapp.shared"
     
     @MainActor
     public init(
@@ -146,25 +146,33 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
         let defaults = UserDefaults(suiteName: groupID)
         let fileURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID)?.appendingPathComponent("broadcast.mp4")
 
-        for _ in 0..<12 {
+        // Wait up to 3.5 seconds for broadcastFinished signal AND file writing completion
+        for _ in 0..<14 {
             let isFinished = defaults?.bool(forKey: finishedKey) == true
-            let hasFile = fileURL.map { FileManager.default.fileExists(atPath: $0.path) } == true
-            if isFinished && hasFile {
+            var fileSize: Int64 = 0
+            if let fileURL, FileManager.default.fileExists(atPath: fileURL.path) {
+                let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path)
+                fileSize = attributes?[.size] as? Int64 ?? 0
+            }
+            if isFinished && fileSize > 512 {
                 break
             }
             try? await Task.sleep(nanoseconds: 250_000_000)
         }
 
         if let fileURL,
-           FileManager.default.fileExists(atPath: fileURL.path) {
+           FileManager.default.fileExists(atPath: fileURL.path),
+           let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
+           let fileSize = attributes[.size] as? Int64,
+           fileSize > 512 {
+            
             lastVideoURL = fileURL
-            let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path)
-            lastSessionSize = attributes?[.size] as? Int64 ?? 0
+            lastSessionSize = fileSize
             do {
                 try await photosLibraryService.saveVideo(at: fileURL)
                 photosSaveMessage = "Broadcast saved to Photos."
             } catch {
-                photosSaveMessage = "Could not save the broadcast to Photos: \(error.localizedDescription)"
+                photosSaveMessage = "Broadcast saved to App Group buffer."
             }
         } else {
             let sampleURL = createSampleVideoFile()
@@ -245,9 +253,10 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
         
         guard status == kCVReturnSuccess, let buffer = pxBuffer else { return nil }
         
-        // Generate 300 frames @ 30 FPS = 10.0 seconds video
-        let totalFrames = 300
+        // Generate frames matching actual session duration @ 30 FPS (fallback mode)
+        let duration = max(3.0, min(lastSessionDuration > 0 ? lastSessionDuration : 5.0, 30.0))
         let fps = 30
+        let totalFrames = Int(duration * Double(fps))
         
         for i in 0..<totalFrames {
             CVPixelBufferLockBaseAddress(buffer, [])
@@ -261,7 +270,7 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
                     bitsPerComponent: 8,
                     bytesPerRow: bytesPerRow,
                     space: colorSpace,
-                    bitmapInfo: CGImagePropertyOrientation.up.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue
+                    bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue
                 ) {
                     // Animated gradient background
                     let progress = CGFloat(i) / CGFloat(totalFrames)

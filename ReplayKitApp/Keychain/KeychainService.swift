@@ -13,7 +13,7 @@ public class SharedKeychainManager: KeychainServiceProtocol {
     public static let shared = SharedKeychainManager()
     
     // Replace with your actual App Group ID (must match Entitlements)
-    public static let accessGroup = "group.com.apkia.replaykitapp.shared-group"
+    public static let accessGroup = "group.com.apkia.replaykitapp.shared"
     public static let keyTag = "com.apkia.replaykitapp.session-key"
     public static let enclaveTag = "com.apkia.replaykitapp.enclave-key"
     

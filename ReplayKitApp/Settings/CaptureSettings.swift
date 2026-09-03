@@ -43,7 +43,7 @@ public final class CaptureSettings: ObservableObject {
 
     private enum Keys {
         static let hashingPipeline = "captureSettings.hashingPipeline"
-        static let appGroup = "group.com.apkia.replaykitapp.shared-group"
+        static let appGroup = "group.com.apkia.replaykitapp.shared"
     }
 
     private init() {

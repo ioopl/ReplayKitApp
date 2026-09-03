@@ -40,14 +40,13 @@ public class InAppCaptureViewModel: ObservableObject {
     // Video writing variables
     private var assetWriter: AVAssetWriter?
     private var assetWriterInput: AVAssetWriterInput?
+    private var pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor?
     private var currentVideoURL: URL?
     private let writerQueue = DispatchQueue(label: "com.apkia.replaykitapp.writer-queue")
     private var hasStartedSession = false
     
-    public init(
-        recorderService: ScreenRecorderServiceProtocol = ReplayKitScreenRecorderService.shared,
-        keychainService: KeychainServiceProtocol = SharedKeychainManager.shared
-    ) {
+    public init(recorderService: ScreenRecorderServiceProtocol = ReplayKitScreenRecorderService.shared,
+                keychainService: KeychainServiceProtocol = SharedKeychainManager.shared) {
         self.recorderService = recorderService
         self.keychainService = keychainService
         
@@ -175,13 +174,18 @@ public class InAppCaptureViewModel: ObservableObject {
         guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
               let writer = assetWriter else { return }
         
+        let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        guard pts.isValid else { return }
+        
         writerQueue.async { [weak self] in
             guard let self = self else { return }
             
-            // Lazy initialization of input because we need the dimensions from the imageBuffer
             if self.assetWriterInput == nil {
-                let width = CVPixelBufferGetWidth(imageBuffer)
-                let height = CVPixelBufferGetHeight(imageBuffer)
+                let rawWidth = CVPixelBufferGetWidth(imageBuffer)
+                let rawHeight = CVPixelBufferGetHeight(imageBuffer)
+                let width = (rawWidth / 2) * 2
+                let height = (rawHeight / 2) * 2
+                let pixelFormat = CVPixelBufferGetPixelFormatType(imageBuffer)
                 
                 let outputSettings: [String: Any] = [
                     AVVideoCodecKey: AVVideoCodecType.h264,
@@ -192,25 +196,38 @@ public class InAppCaptureViewModel: ObservableObject {
                 let input = AVAssetWriterInput(mediaType: .video, outputSettings: outputSettings)
                 input.expectsMediaDataInRealTime = true
                 
+                let sourcePixelBufferAttributes: [String: Any] = [
+                    kCVPixelBufferPixelFormatTypeKey as String: Int(pixelFormat),
+                    kCVPixelBufferWidthKey as String: width,
+                    kCVPixelBufferHeightKey as String: height
+                ]
+                
+                let adaptor = AVAssetWriterInputPixelBufferAdaptor(
+                    assetWriterInput: input,
+                    sourcePixelBufferAttributes: sourcePixelBufferAttributes
+                )
+                
                 if writer.canAdd(input) {
                     writer.add(input)
                     self.assetWriterInput = input
+                    self.pixelBufferAdaptor = adaptor
                 } else {
                     print("Could not add AVAssetWriterInput to writer.")
                     return
                 }
             }
             
-            guard let input = self.assetWriterInput else { return }
+            guard let input = self.assetWriterInput,
+                  let adaptor = self.pixelBufferAdaptor else { return }
             
             if writer.status == .unknown {
                 writer.startWriting()
-                writer.startSession(atSourceTime: CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
+                writer.startSession(atSourceTime: pts)
                 self.hasStartedSession = true
             }
             
             if writer.status == .writing && input.isReadyForMoreMediaData && self.hasStartedSession {
-                input.append(sampleBuffer)
+                adaptor.append(imageBuffer, withPresentationTime: pts)
             }
         }
     }
