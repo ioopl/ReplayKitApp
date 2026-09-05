@@ -386,6 +386,12 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     
     public func authenticateAndPrepareKeys() {
         errorMessage = nil
+#if targetEnvironment(simulator)
+        // Secure Enclave and biometric evaluation are unavailable on Simulator.
+        // Use software test keys so the rest of the broadcast UI can be exercised.
+        prepareKeys()
+        return
+#endif
         let context = LAContext()
         var error: NSError?
         
@@ -409,13 +415,19 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     
     private func prepareKeys() {
         do {
+#if !targetEnvironment(simulator)
             // Generate Enclave Key Pair (or fallback)
             try keychainService.generateSecureEnclaveKey()
+#endif
             
             // Create or fetch symmetric key
             _ = try keychainService.getOrCreateSymmetricKey()
             
+#if targetEnvironment(simulator)
+            self.keyStatus = "Simulator Test Keys Active (Software)"
+#else
             self.keyStatus = "Secure Keys Active (App Group Shared)"
+#endif
             self.isAuthenticated = true
             
             // Sync the current pipeline choice to shared UserDefaults so SampleHandler can read it

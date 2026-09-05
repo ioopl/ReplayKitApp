@@ -58,6 +58,11 @@ public class InAppCaptureViewModel: ObservableObject {
     
     public func authenticateAndPrepareKeys() {
         errorMessage = nil
+#if targetEnvironment(simulator)
+        // Secure Enclave and biometric evaluation are unavailable on Simulator.
+        prepareKeys()
+        return
+#endif
         let context = LAContext()
         var error: NSError?
         
@@ -81,9 +86,15 @@ public class InAppCaptureViewModel: ObservableObject {
     
     private func prepareKeys() {
         do {
+#if !targetEnvironment(simulator)
             try keychainService.generateSecureEnclaveKey()
+#endif
             _ = try keychainService.getOrCreateSymmetricKey()
+#if targetEnvironment(simulator)
+            self.keyStatus = "Simulator Test Keys Active (Software)"
+#else
             self.keyStatus = "Secure Keys Active (Secure Enclave Bound)"
+#endif
             self.isAuthenticated = true
         } catch {
             self.errorMessage = "Failed to generate keys: \(error.localizedDescription)"
@@ -390,4 +401,3 @@ public class InAppCaptureViewModel: ObservableObject {
         }
     }
 }
-

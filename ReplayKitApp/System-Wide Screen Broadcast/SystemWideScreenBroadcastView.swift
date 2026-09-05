@@ -105,14 +105,34 @@ public struct SystemWideScreenBroadcastView: View {
                         .cornerRadius(12)
                         .padding(.horizontal)
                 }
-            } else {
-                VStack(spacing: 24) {
+                } else {
+                    VStack(spacing: 24) {
+#if targetEnvironment(simulator)
+                    Text("System-wide ReplayKit capture is unavailable in Simulator.")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                        .multilineTextAlignment(.center)
+
+                    Button(action: {
+                        viewModel.simulateBroadcastEnded()
+                    }) {
+                        Label("Simulate Broadcast (Simulator)", systemImage: "play.rectangle.fill")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.orange)
+                            .cornerRadius(12)
+                            .padding(.horizontal)
+                    }
+#else
                     Text("Tap below to launch System Broadcast Picker:")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
                     BroadcastPickerRepresentable()
                         .frame(width: 80, height: 80)
+#endif
                     
                     Button(action: {
                         viewModel.syncPipelineToAppGroup()
