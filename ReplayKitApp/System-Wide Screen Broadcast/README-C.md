@@ -1,7 +1,7 @@
- # "1. What is the Ultimate End Game is for this System-Wide Screen Broadcasting architecture.
+ # 1. "What is the Ultimate End Game is for this System-Wide Screen Broadcasting architecture.
 # Why this setup needs: 
-# "2. Create the Broadcast Extension Target" 
-# "3. App Groups - As a New Capability" 
+# 2. "Create the Broadcast Extension Target" 
+# 3. "App Groups - As a New Capability" 
 
 
 ## 1. The Ultimate End Game for System-Wide Screen Broadcasting (Option C)
@@ -28,12 +28,12 @@ The OS feeds the screen frames directly to this extension.
 Because it is a separate target, it compiles into a separate binary that runs alongside your app.
 
 
-## 3. App Group Lifecycle
+## 3. App Group - Lifecycle
 
 App Group lifecycle markers: broadcastActive and broadcastFinished
 
 - SampleHandler now writes broadcastActive and broadcastFinished to the App Group.
-- The host app monitors those markers instead of relying only on RPScreenRecorder.isRecording.
+- The host app monitors those markers instead of relying only on RPScreenRecorder.isRecording
 - Photos export only starts after broadcastFinished is set.
 - The Photos permission remains correctly isolated inside the injected Photos service.
 - The new BroadcastExtension target does not itself require Photos permission. The host app requests Photos access because it owns the export to the user’s Photos library.

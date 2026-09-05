@@ -2,7 +2,8 @@ import Foundation
 import Combine
 import LocalAuthentication
 import ReplayKit
-//import UIKit
+import AVFoundation
+import UIKit
 
 @MainActor
 public class SystemWideScreenBroadcastViewModel: ObservableObject {
@@ -26,7 +27,10 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     private let photosLibraryService: PhotosLibraryServiceProtocol
     private var pollingTimer: Timer?
     private var startTime: Date?
+    private var extensionWasActive = false
+    private var activeBroadcastSessionID: String?
     private let groupID = "group.com.apkia.replaykitapp.shared"
+    private let outputDirectoryName = "BroadcastOutput"
     
     @MainActor
     public init(
@@ -35,6 +39,7 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     ) {
         self.keychainService = keychainService
         self.photosLibraryService = photosLibraryService ?? PhotosLibraryService.shared
+        clearStaleBroadcastState()
         startMonitoringBroadcast()
     }
     
@@ -43,6 +48,25 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     }
     
     // MARK: - Broadcast monitoring + ledger polling
+
+    private func clearStaleBroadcastState() {
+        guard let defaults = UserDefaults(suiteName: groupID) else { return }
+        // A host-app restart must not treat a previous extension session as a
+        // newly completed broadcast. SampleHandler writes a fresh UUID per run.
+        defaults.set(false, forKey: "broadcastActive")
+        defaults.set(false, forKey: "broadcastFinished")
+        defaults.removeObject(forKey: "broadcastSessionID")
+        defaults.removeObject(forKey: "broadcastFinishedSessionID")
+        defaults.removeObject(forKey: "broadcastVideoSampleCount")
+        defaults.removeObject(forKey: "broadcastReceivedSampleCount")
+        defaults.removeObject(forKey: "broadcastVideoBufferCount")
+        defaults.removeObject(forKey: "broadcastVideoFormat")
+        defaults.removeObject(forKey: "broadcastWriterStatus")
+        defaults.removeObject(forKey: "broadcastWriterError")
+        defaults.removeObject(forKey: "broadcastWriterErrorDomain")
+        defaults.removeObject(forKey: "broadcastWriterErrorCode")
+        defaults.synchronize()
+    }
     
     private func startMonitoringBroadcast() {
         // Poll RPScreenRecorder status to detect when user starts/stops system-wide broadcast
@@ -51,19 +75,24 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
                 guard let self = self else { return }
                 let defaults = UserDefaults(suiteName: self.groupID)
                 let extensionActive = defaults?.bool(forKey: "broadcastActive") == true
-                let extensionFinished = defaults?.bool(forKey: "broadcastFinished") == true
-                // The Broadcast Upload Extension is a separate process, so the host app's
-                // RPScreenRecorder state is not a reliable lifecycle signal by itself.
-                let active = RPScreenRecorder.shared().isRecording || extensionActive
-                if active && !self.isBroadcasting {
+                // This screen is driven by the Broadcast Upload Extension marker.
+                // RPScreenRecorder.isRecording describes in-app capture and can be
+                // stale/true during a system broadcast, causing false finalization.
+                if extensionActive && !self.isBroadcasting {
                     self.isBroadcasting = true
+                    self.extensionWasActive = true
+                    self.activeBroadcastSessionID = defaults?.string(forKey: "broadcastSessionID")
                     self.startTime = Date()
                     self.records.removeAll()
                     self.lastVideoURL = nil
                     self.lastSessionSize = 0
                     self.photosSaveMessage = nil
-                } else if self.isBroadcasting && (!active || extensionFinished) {
+                    // Clear stale finished marker from any previous broadcast session
+                    defaults?.set(false, forKey: "broadcastFinished")
+                    defaults?.synchronize()
+                } else if self.isBroadcasting && self.extensionWasActive && !extensionActive {
                     self.isBroadcasting = false
+                    self.extensionWasActive = false
                     if let start = self.startTime {
                         self.lastSessionDuration = Date().timeIntervalSince(start)
                     } else {
@@ -144,28 +173,59 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     private func finalizeBroadcastOutput() async {
         let finishedKey = "broadcastFinished"
         let defaults = UserDefaults(suiteName: groupID)
-        let fileURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID)?.appendingPathComponent("broadcast.mp4")
+        let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID)
+        let fileURL = containerURL?
+            .appendingPathComponent(outputDirectoryName, isDirectory: true)
+            .appendingPathComponent("broadcast.mp4")
 
-        // Wait up to 3.5 seconds for broadcastFinished signal AND file writing completion
-        for _ in 0..<14 {
+        print("🔵 [Finalize] containerURL = \(String(describing: containerURL))")
+        print("🔵 [Finalize] fileURL = \(String(describing: fileURL))")
+
+        // Wait up to 5 seconds for broadcastFinished signal AND file writing completion
+        for i in 0..<20 {
             let isFinished = defaults?.bool(forKey: finishedKey) == true
+            let fileExists = fileURL.map { FileManager.default.fileExists(atPath: $0.path) } ?? false
             var fileSize: Int64 = 0
-            if let fileURL, FileManager.default.fileExists(atPath: fileURL.path) {
+            if let fileURL, fileExists {
                 let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path)
                 fileSize = attributes?[.size] as? Int64 ?? 0
             }
+            print("🔵 [Finalize] poll \(i): isFinished=\(isFinished) fileExists=\(fileExists) fileSize=\(fileSize)")
             if isFinished && fileSize > 512 {
+                print("🟢 [Finalize] File ready — breaking out of poll loop.")
                 break
             }
             try? await Task.sleep(nanoseconds: 250_000_000)
         }
 
-        if let fileURL,
-           FileManager.default.fileExists(atPath: fileURL.path),
-           let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
-           let fileSize = attributes[.size] as? Int64,
-           fileSize > 512 {
-            
+        let fileExists = fileURL.map { FileManager.default.fileExists(atPath: $0.path) } ?? false
+        let fileSize: Int64
+        if let fileURL, fileExists,
+           let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path) {
+            fileSize = attributes[.size] as? Int64 ?? 0
+        } else {
+            fileSize = 0
+        }
+        let isFinished = defaults?.bool(forKey: finishedKey) == true
+        let finishedSessionID = defaults?.string(forKey: "broadcastFinishedSessionID")
+        let sampleCount = defaults?.integer(forKey: "broadcastVideoSampleCount") ?? 0
+        let receivedCount = defaults?.integer(forKey: "broadcastReceivedSampleCount") ?? 0
+        let videoBufferCount = defaults?.integer(forKey: "broadcastVideoBufferCount") ?? 0
+        let videoFormat = defaults?.string(forKey: "broadcastVideoFormat") ?? "unknown"
+        let writerStatus = defaults?.integer(forKey: "broadcastWriterStatus")
+        let writerError = defaults?.string(forKey: "broadcastWriterError")
+        let writerErrorDomain = defaults?.string(forKey: "broadcastWriterErrorDomain")
+        let writerErrorCode = defaults?.integer(forKey: "broadcastWriterErrorCode")
+        let errorText = writerError ?? "none"
+        let errorDomain = writerErrorDomain ?? "none"
+        print("🔵 [Finalize] Final state: fileExists=\(fileExists) fileSize=\(fileSize) broadcastFinished=\(isFinished)")
+        print("🔵 [Finalize] receivedSamples=\(receivedCount) videoBuffers=\(videoBufferCount) writtenVideoSamples=\(sampleCount) format=\(videoFormat) writerStatus=\(String(describing: writerStatus)) writerError=\(errorText) domain=\(errorDomain) code=\(String(describing: writerErrorCode))")
+
+        let sessionMatches = activeBroadcastSessionID != nil &&
+            activeBroadcastSessionID == finishedSessionID
+
+        if sessionMatches, let fileURL, fileExists, fileSize > 512 {
+            print("🟢 [Finalize] Using REAL broadcast.mp4 — size=\(fileSize) bytes")
             lastVideoURL = fileURL
             lastSessionSize = fileSize
             do {
@@ -175,19 +235,30 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
                 photosSaveMessage = "Broadcast saved to App Group buffer."
             }
         } else {
+            print("🔴 [Finalize] REAL RECORDING UNAVAILABLE — sessionMatches=\(sessionMatches), broadcast.mp4 missing or too small. fileExists=\(fileExists) size=\(fileSize) broadcastFinished=\(isFinished)")
+#if targetEnvironment(simulator)
+            // ReplayKit system-wide capture is unavailable in the simulator, so retain
+            // the animated test artifact there. A physical device must never hide a
+            // handler/writer failure behind this generated video.
             let sampleURL = createSampleVideoFile()
             lastVideoURL = sampleURL
             if let sampleURL {
                 let attributes = try? FileManager.default.attributesOfItem(atPath: sampleURL.path)
                 lastSessionSize = attributes?[.size] as? Int64 ?? 0
             }
-            photosSaveMessage = "Broadcast recording captured in local buffer."
+            photosSaveMessage = "Simulator fallback video generated."
+#else
+            lastVideoURL = nil
+            lastSessionSize = 0
+            photosSaveMessage = writerError.map {
+                "Device recording failed: \($0)"
+            } ?? "Device recording was not produced. Check the BroadcastExtension console."
+#endif
         }
 
         loadFrameMetadata()
         showSummary = true
     }
-
     // MARK: - Actions
     
     public func deleteLocalBuffer() {
