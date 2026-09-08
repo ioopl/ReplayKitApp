@@ -13,7 +13,7 @@ The card is shared by `PostSessionSummaryView` and `FrameDetailView` through
 
 ## How the layers relate
 
-These are related layers, but they answer different questions: (See image attached)
+These are related layers, but they answer different questions:[See image attached](Chain Layers.png)
 
 | Layer | What it answers | Current status |
 | --- | --- | --- |
@@ -23,11 +23,9 @@ These are related layers, but they answer different questions: (See image attach
 | Apple App Attest | Can a backend establish that requests came from a legitimate instance of this app? | Planned, not implemented |
 | X.509 verification | Can the backend validate the certificate trust path in App Attest attestation data? | Planned, not implemented |
 
-The card combines local evidence from the first two layers. It does not turn
-that evidence into Apple App Attest verification. App Attest is documented in
-[Apple DeviceCheck - App Attest](App%20Attest%20-%20Apple%20DeviceCheck.md).
+The card combines local evidence from the first two layers. It does not turn that evidence into Apple App Attest verification. App Attest is documented in [Apple DeviceCheck - App Attest](App Attest/App Attest-Apple DeviceCheck.md)
 
-## What the current app produces
+## What the current App produces
 
 ### Frame hash chain
 
@@ -75,12 +73,15 @@ appropriate signing key and, for remote trust, a server verification record.
 
 ## What an end user can prove today
 
-Today, an end user can demonstrate local, reproducible evidence—not complete
-legal custody:
+Today, an end user can inspect local, reproducible evidence—not complete legal
+custody:
 
 1. Open the frame detail or post-session summary card.
-2. Copy the displayed frame hash, previous hash, chain hash, timestamp, session
-   ID, and public-key fingerprint.
+2. View the displayed frame hash, previous hash, chain hash, timestamp, session
+   ID, and public-key fingerprint. The current `FrameDetailView` provides a
+   `Copy Hash` action for the frame hash only; the remaining values are
+   currently view-only and must be transcribed or captured until the copy/export
+   TODOs below are implemented.
 3. Preserve the original encrypted capture, frame metadata, and the displayed
    values together.
 4. Recompute the frame and chain hashes independently using the documented
