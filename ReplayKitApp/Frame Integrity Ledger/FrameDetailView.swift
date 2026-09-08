@@ -190,7 +190,13 @@ public struct FrameDetailView: View {
                     .cornerRadius(16)
                     .padding(.horizontal)
                     
-                    // 6. Encryption Section
+                    // 6. Legal chain of custody and integrity inspection
+                    LegalChainOfCustodyCard(
+                        chainHash: record.chainHash,
+                        timestamp: record.timestamp
+                    )
+
+                    // 7. Encryption Section
                     VStack(alignment: .leading, spacing: 16) {
                         DetailGroupHeader(title: "ENCRYPTION")
                         
@@ -217,7 +223,7 @@ public struct FrameDetailView: View {
                     .cornerRadius(16)
                     .padding(.horizontal)
                     
-                    // 7. Session Section
+                    // 8. Session Section
                     VStack(alignment: .leading, spacing: 16) {
                         DetailGroupHeader(title: "SESSION")
                         
@@ -237,7 +243,7 @@ public struct FrameDetailView: View {
                     .cornerRadius(16)
                     .padding(.horizontal)
                     
-                    // 8. Raw Bytes Developer View
+                    // 9. Raw Bytes Developer View
                     VStack(alignment: .leading, spacing: 12) {
                         Button(action: {
                             withAnimation {

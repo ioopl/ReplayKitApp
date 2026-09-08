@@ -18,6 +18,51 @@ public class SharedKeychainManager: KeychainServiceProtocol {
     public static let enclaveTag = "com.apkia.replaykitapp.enclave-key"
     
     private init() {}
+
+    /// Returns a SHA-256 fingerprint of the public half of the persisted
+    /// signing key. Only the public key is exported; the private key remains
+    /// protected by the Secure Enclave (or the software fallback on a
+    /// simulator).
+    public func publicKeyFingerprint() throws -> String? {
+        guard let key = try persistedEnclaveKey() else { return nil }
+        let publicKey = SecKeyCopyPublicKey(key) ?? key
+
+        var error: Unmanaged<CFError>?
+        guard let externalRepresentation = SecKeyCopyExternalRepresentation(publicKey, &error) as Data? else {
+            if let error = error?.takeRetainedValue() {
+                throw error
+            }
+            return nil
+        }
+
+        let digest = SHA256.hash(data: externalRepresentation)
+        let hex = digest.map { String(format: "%02X", $0) }.joined()
+        guard hex.count >= 8 else { return nil }
+        return "0x\(hex.prefix(4))...\(hex.suffix(4))"
+    }
+
+    private func persistedEnclaveKey() throws -> SecKey? {
+        var query: [String: Any] = [
+            kSecClass as String: kSecClassKey,
+            kSecAttrApplicationTag as String: Self.enclaveTag.data(using: .utf8)!,
+            kSecAttrKeyType as String: kSecAttrKeyTypeECSECPrimeRandom,
+            kSecAttrAccessGroup as String: Self.accessGroup,
+            kSecReturnRef as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+
+        var result: CFTypeRef?
+        var status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == -34018 {
+            query.removeValue(forKey: kSecAttrAccessGroup as String)
+            status = SecItemCopyMatching(query as CFDictionary, &result)
+        }
+        if status == errSecItemNotFound { return nil }
+        guard status == errSecSuccess else {
+            throw NSError(domain: NSOSStatusErrorDomain, code: Int(status))
+        }
+        return result as! SecKey
+    }
     
     /// Generates a hardware-bound key pair in the Secure Enclave.
     /// On Simulators, falls back to a standard Software EC key pair if Enclave is unavailable.

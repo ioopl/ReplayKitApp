@@ -12,6 +12,8 @@ public struct PostSessionSummaryView: View {
     let mode: SessionMode
     let onDismiss: () -> Void
     let onDeleteBuffer: (() -> Void)?
+    let chainHash: String?
+    let cryptographicTimestamp: String?
     
     @State private var isCopied = false
     @State private var showDeleteAlert = false
@@ -22,13 +24,17 @@ public struct PostSessionSummaryView: View {
         duration: TimeInterval,
         mode: SessionMode,
         onDismiss: @escaping () -> Void,
-        onDeleteBuffer: (() -> Void)? = nil
+        onDeleteBuffer: (() -> Void)? = nil,
+        chainHash: String? = nil,
+        cryptographicTimestamp: String? = nil
     ) {
         self.title = title
         self.duration = duration
         self.mode = mode
         self.onDismiss = onDismiss
         self.onDeleteBuffer = onDeleteBuffer
+        self.chainHash = chainHash
+        self.cryptographicTimestamp = cryptographicTimestamp
     }
     
     private var formattedDuration: String {
@@ -202,8 +208,14 @@ public struct PostSessionSummaryView: View {
                             )
                         }
                         .padding(.horizontal)
+
+                        // 5. Legal chain of custody and integrity inspection
+                        LegalChainOfCustodyCard(
+                            chainHash: chainHash,
+                            timestamp: cryptographicTimestamp
+                        )
                         
-                        // 5. Actions Card
+                        // 6. Actions Card
                         VStack(spacing: 16) {
                             Text("Actions")
                                 .font(.headline)
@@ -322,4 +334,20 @@ struct StatCell: View {
         }
         .frame(maxWidth: .infinity)
     }
+}
+
+#Preview {
+    PostSessionSummaryView(
+        title: "Capture Completed",
+        duration: 3.0,
+        mode: .local(videoURL: URL(fileURLWithPath: "/tmp/mock_clip.mp4"), fileSize: 25),
+        onDismiss: {
+            
+        },
+        onDeleteBuffer: {
+           
+        },
+        chainHash: "0000000000000000000000000000000000000000000000000000000000000000",
+        cryptographicTimestamp: "viewModel.records.last?.timestamp"
+    )
 }

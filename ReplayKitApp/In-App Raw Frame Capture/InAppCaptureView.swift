@@ -178,7 +178,9 @@ public struct InAppCaptureView: View {
                 },
                 onDeleteBuffer: {
                     viewModel.deleteLocalBuffer()
-                }
+                },
+                chainHash: viewModel.records.last?.chainHash,
+                cryptographicTimestamp: viewModel.records.last?.timestamp
             )
         }
         .sheet(item: $selectedRecord) { record in
