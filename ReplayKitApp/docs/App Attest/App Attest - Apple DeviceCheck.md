@@ -60,6 +60,10 @@ attestation to a server, verify an App Attest assertion, or perform X.509
 certificate-chain verification. The current UI is a local Secure Enclave key
 and frame-ledger inspection tool.
 
+For the separate evidence/audit explanation—including what the current chain
+hash proves, what it does not prove, and the planned UI improvements—see
+[Legal Chain of Custody](LegalChainOfCustody.md).
+
 The phrase “Hardware-Enclave Attestation — Verified” should therefore be
 treated as a UI placeholder for the local key-integrity signal until the
 server-backed work below is complete. It must not be presented as Apple App
