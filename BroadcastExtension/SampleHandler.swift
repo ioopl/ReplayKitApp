@@ -390,26 +390,51 @@ public class SampleHandler: RPBroadcastSampleHandler {
         let chainInput = frameHash + prevHash
         let chainHash = SHA256.hash(data: Data(chainInput.utf8)).compactMap { String(format: "%02x", $0) }.joined()
         lastChainHash = chainHash
-        
-        // 5. Every 10th frame: write ledger record to shared App Group UserDefaults
-        if frameCounter % 10 == 0 {
-            let elapsed = Date().timeIntervalSince(sessionStartDate)
-            let minutes = Int(elapsed) / 60
-            let seconds = Int(elapsed) % 60
-            let ms = Int((elapsed.truncatingRemainder(dividingBy: 1.0)) * 1000)
-            let timestamp = String(format: "%02d:%02d.%03d", minutes, seconds, ms)
-            
+
+        let elapsed = Date().timeIntervalSince(sessionStartDate)
+        let minutes = Int(elapsed) / 60
+        let seconds = Int(elapsed) % 60
+        let ms = Int((elapsed.truncatingRemainder(dividingBy: 1.0)) * 1000)
+        let timestamp = String(format: "%02d:%02d.%03d", minutes, seconds, ms)
+
+        // Persist the authenticated frame payload and thumbnail for the
+        // post-session encrypted gallery. The UI ledger remains lightweight.
+        if let key = symmetricKey {
             let width = CVPixelBufferGetWidth(imageBuffer)
             let height = CVPixelBufferGetHeight(imageBuffer)
-            
-            // Scale thumbnail to 360px wide for crisp enlarged preview
             let scale: CGFloat = 360.0 / CGFloat(width)
             let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
-            var thumbBase64: String = ""
-            if let cgImg = self.ciContext.createCGImage(scaledImage, from: scaledImage.extent),
-               let thumbData = UIImage(cgImage: cgImg).jpegData(compressionQuality: 0.5) {
-                thumbBase64 = thumbData.base64EncodedString()
+            var thumbnailData: Data?
+            if let cgImg = self.ciContext.createCGImage(scaledImage, from: scaledImage.extent) {
+                thumbnailData = UIImage(cgImage: cgImg).jpegData(compressionQuality: 0.5)
             }
+            let metadata = StoredFrameMetadata(
+                index: frameCounter,
+                timestamp: timestamp,
+                sizeKB: String(format: "%.1f KB", Double(jpegData.count) / 1024.0),
+                rawSize: jpegData.count,
+                sha256: frameHash,
+                previousHash: prevHash,
+                chainHash: chainHash,
+                sessionID: broadcastSessionID,
+                resolution: "\(width) × \(height)"
+            )
+            do {
+                try EncryptedFrameStore.shared.persist(
+                    payload: jpegData,
+                    thumbnail: thumbnailData,
+                    metadata: metadata,
+                    using: key
+                )
+            } catch {
+                print("Encrypted frame-store write failed: \(error)")
+            }
+        }
+
+        // 5. Every 10th frame: write ledger record to shared App Group UserDefaults
+        if frameCounter % 10 == 0 {
+            let width = CVPixelBufferGetWidth(imageBuffer)
+            let height = CVPixelBufferGetHeight(imageBuffer)
             
             let entry: [String: Any] = [
                 "index": frameCounter,
@@ -419,7 +444,7 @@ public class SampleHandler: RPBroadcastSampleHandler {
                 "sha256": frameHash,
                 "previousHash": prevHash,
                 "chainHash": chainHash,
-                "thumbBase64": thumbBase64,
+                "sessionID": broadcastSessionID,
                 "resolution": "\(width) × \(height)"
             ]
             

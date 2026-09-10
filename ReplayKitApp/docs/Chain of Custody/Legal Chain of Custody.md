@@ -27,6 +27,54 @@ The card combines local evidence from the first two layers. It does not turn tha
 
 ## What the current App produces
 
+- [ ] Store a small durable session catalog in the App Group containing
+  session ID, creation time, frame count, manifest location, and deletion
+  state.
+- [ ] Enumerate and recover valid `EncryptedFrames/<sessionID>` directories on
+  app launch instead of relying only on in-memory view-model state.
+- [ ] Validate each manifest and confirm the Keychain key is available before
+  showing a recovered session.
+- [ ] Show recovered sessions in a “Saved Sessions” gallery with explicit
+  retention and delete controls.
+- [ ] Handle missing keys, partial writes, corrupted manifests, and orphaned
+  directories with a visible recovery status rather than silently hiding them.
+
+## Proposed encrypted frame gallery
+
+The session-summary gallery uses this storage contract:
+
+1. During capture, write each sealed JPEG payload to an app-private or App
+   Group file using a session/frame identifier. Store the AES-GCM combined
+   representation (nonce, ciphertext, and authentication tag), not plaintext
+   JPEG bytes.
+2. Store a versioned manifest containing frame index, hash values, chain
+   values, timestamp, resolution, payload path, and session ID. The current
+   manifest is a small JSON index; authenticating/encrypting the manifest itself
+   remains a hardening TODO.
+3. Store gallery thumbnails as separately sealed AES-GCM payloads. A thumbnail
+   can be decrypted only when the gallery/detail screen needs to render it;
+   the resulting `UIImage` should remain in memory only.
+4. `PostSessionSummaryView` presents `EncryptedFrameGalleryView` using the
+   session ID and manifest-backed gallery model.
+5. On tap, read the sealed file, decrypt with the shared session key, verify
+   the authentication tag, recompute the frame hash, and compare it with the
+   manifest before showing the image.
+6. Delete the session directory and manifest together when the user deletes
+   the local buffer. Use an explicit retention policy rather than leaving
+   orphaned frame files.
+
+File storage is preferable to putting image bytes in `UserDefaults`: it avoids
+large plist values, supports streaming and cleanup, and makes per-frame
+authenticated encryption practical. `UserDefaults` should contain only small
+indexes or status values, not gallery image data.
+
+The proposed gallery would still decrypt a preview briefly in memory in order
+to display it. “Encrypted gallery” means encrypted at rest and authenticated
+before display; it does not mean pixels remain encrypted while rendered on
+screen.
+
+## What the current app produces
+
 ### Frame hash chain
 
 For each captured frame, the app computes a frame hash and links it to the

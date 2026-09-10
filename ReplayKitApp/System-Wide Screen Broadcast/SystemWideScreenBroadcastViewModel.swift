@@ -22,6 +22,7 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     
     /// Frame records read from the shared App Group UserDefaults (written by SampleHandler every 10 frames)
     @Published public var records: [FrameRecord] = []
+    @Published public var lastSessionID: String?
     
     private let keychainService: KeychainServiceProtocol
     private let photosLibraryService: PhotosLibraryServiceProtocol
@@ -82,6 +83,7 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
                     self.isBroadcasting = true
                     self.extensionWasActive = true
                     self.activeBroadcastSessionID = defaults?.string(forKey: "broadcastSessionID")
+                    self.lastSessionID = self.activeBroadcastSessionID
                     self.startTime = Date()
                     self.records.removeAll()
                     self.lastVideoURL = nil
@@ -118,6 +120,7 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     private func loadFrameMetadata() {
         guard let defaults = UserDefaults(suiteName: groupID) else { return }
         guard let entries = defaults.array(forKey: "frameMetadata") as? [[String: Any]] else { return }
+        let decryptionKey = try? keychainService.getSymmetricKey()
         
         // Map raw dicts → FrameRecord, skipping already-loaded indices
         let existingIndices = Set(records.map { $0.index })
@@ -135,10 +138,16 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
                   let resolution = entry["resolution"] as? String
             else { continue }
             
-            // Decode thumbnail
+            let sessionID = entry["sessionID"] as? String ?? activeBroadcastSessionID ?? "SampleHandler"
+
+            // Decrypt the thumbnail only when loading it for the in-memory ledger.
             var thumbnail: UIImage?
-            if let base64 = entry["thumbBase64"] as? String,
-               let data = Data(base64Encoded: base64) {
+            if let key = decryptionKey ?? nil,
+               let data = try? EncryptedFrameStore.shared.decryptThumbnail(
+                    sessionID: sessionID,
+                    frameIndex: index,
+                    using: key
+               ) {
                 thumbnail = UIImage(data: data)
             }
             
@@ -155,7 +164,7 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
                 isEncrypted: true,
                 thumbnail: thumbnail,
                 hexDump: "",
-                sessionID: "SampleHandler",
+                sessionID: sessionID,
                 resolution: resolution
             )
             newRecords.append(record)
@@ -265,8 +274,13 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
         if let url = lastVideoURL {
             try? FileManager.default.removeItem(at: url)
         }
+        if let sessionID = lastSessionID {
+            try? EncryptedFrameStore.shared.deleteSession(sessionID)
+        }
+        UserDefaults(suiteName: groupID)?.removeObject(forKey: "frameMetadata")
         lastVideoURL = nil
         lastSessionSize = 0
+        lastSessionID = nil
     }
     
     public func simulateBroadcastEnded() {

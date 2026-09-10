@@ -22,6 +22,8 @@ public class InAppCaptureViewModel: ObservableObject {
     @Published public var lastSessionSize: Int64 = 0
     
     @Published public var records: [FrameRecord] = []
+
+    public var currentSessionID: String { sessionID }
     
     public var lastVideoURL: URL?
     
@@ -179,6 +181,7 @@ public class InAppCaptureViewModel: ObservableObject {
         }
         lastVideoURL = nil
         lastSessionSize = 0
+        try? EncryptedFrameStore.shared.deleteSession(sessionID)
     }
     
     private func appendFrameToAssetWriter(_ sampleBuffer: CMSampleBuffer) {
@@ -350,8 +353,8 @@ public class InAppCaptureViewModel: ObservableObject {
         
         do {
             let sealedBox = try AES.GCM.seal(jpegData, using: key)
-            let payload = sealedBox.combined
-            let payloadSize = payload?.count ?? 0
+            guard let payload = sealedBox.combined else { return }
+            let payloadSize = payload.count
             
             let elapsed: Double
             if let start = startTime {
@@ -366,7 +369,26 @@ public class InAppCaptureViewModel: ObservableObject {
             let timeString = String(format: "%02d:%02d.%03d", minutes, seconds, milliseconds)
             
             let thumbnailImage = createThumbnail(from: imageBuffer)
-            let hexBytesString = getHexDump(from: payload ?? Data())
+            let hexBytesString = getHexDump(from: payload)
+
+            let metadata = StoredFrameMetadata(
+                index: frameCount + 1,
+                timestamp: timeString,
+                sizeKB: String(format: "%.1f KB", Double(jpegData.count) / 1024.0),
+                rawSize: jpegData.count,
+                sha256: frameHash,
+                previousHash: prevHash,
+                chainHash: currentChainHash,
+                sessionID: sessionID,
+                resolution: "\(width) × \(height)"
+            )
+            let thumbnailData = thumbnailImage?.jpegData(compressionQuality: 0.5)
+            try? EncryptedFrameStore.shared.persist(
+                payload: jpegData,
+                thumbnail: thumbnailData,
+                metadata: metadata,
+                using: key
+            )
             
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }

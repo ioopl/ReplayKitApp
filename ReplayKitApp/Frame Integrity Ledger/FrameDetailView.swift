@@ -4,7 +4,7 @@ public struct FrameDetailView: View {
     let record: FrameRecord
     @ObservedObject private var settings = CaptureSettings.shared
     @Environment(\.dismiss) private var dismiss
-    @State private var isCopied = false
+    @State private var copiedValue: String?
     @State private var showHexPreview = false
     @State private var showEnlargedImage = false
     
@@ -14,9 +14,11 @@ public struct FrameDetailView: View {
     
     private func copyToClipboard(_ text: String) {
         UIPasteboard.general.string = text
-        isCopied = true
+        copiedValue = text
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            isCopied = false
+            if copiedValue == text {
+                copiedValue = nil
+            }
         }
     }
     
@@ -134,7 +136,7 @@ public struct FrameDetailView: View {
                         Button(action: {
                             copyToClipboard(record.sha256)
                         }) {
-                            Label(isCopied ? "Copied!" : "Copy Hash", systemImage: isCopied ? "checkmark" : "doc.on.doc.fill")
+                            Label(copiedValue == record.sha256 ? "Copied!" : "Copy Hash", systemImage: copiedValue == record.sha256 ? "checkmark" : "doc.on.doc.fill")
                                 .font(.subheadline.bold())
                                 .foregroundColor(.blue)
                         }
@@ -159,6 +161,12 @@ public struct FrameDetailView: View {
                                 .foregroundColor(.primary)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
+
+                            Button(copiedValue == record.previousHash ? "Copied!" : "Copy Previous Hash") {
+                                copyToClipboard(record.previousHash)
+                            }
+                            .font(.caption.bold())
+                            .foregroundColor(.blue)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
@@ -170,6 +178,12 @@ public struct FrameDetailView: View {
                                 .foregroundColor(.primary)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
+
+                            Button(copiedValue == record.chainHash ? "Copied!" : "Copy Chain Hash") {
+                                copyToClipboard(record.chainHash)
+                            }
+                            .font(.caption.bold())
+                            .foregroundColor(.blue)
                         }
                         
                         HStack {
@@ -234,6 +248,12 @@ public struct FrameDetailView: View {
                             Text(record.sessionID)
                                 .font(.system(.caption, design: .monospaced))
                                 .foregroundColor(.primary)
+
+                            Button(copiedValue == record.sessionID ? "Copied!" : "Copy Session ID") {
+                                copyToClipboard(record.sessionID)
+                            }
+                            .font(.caption.bold())
+                            .foregroundColor(.blue)
                         }
                         
                         DetailRow(label: "Sequence", value: "\(record.index) / Capture Active")

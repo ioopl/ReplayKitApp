@@ -180,7 +180,8 @@ public struct InAppCaptureView: View {
                     viewModel.deleteLocalBuffer()
                 },
                 chainHash: viewModel.records.last?.chainHash,
-                cryptographicTimestamp: viewModel.records.last?.timestamp
+                cryptographicTimestamp: viewModel.records.last?.timestamp,
+                sessionID: viewModel.currentSessionID
             )
         }
         .sheet(item: $selectedRecord) { record in

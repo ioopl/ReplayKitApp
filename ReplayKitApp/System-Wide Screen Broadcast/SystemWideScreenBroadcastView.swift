@@ -193,7 +193,8 @@ public struct SystemWideScreenBroadcastView: View {
                     viewModel.deleteLocalBuffer()
                 },
                 chainHash: viewModel.records.last?.chainHash,
-                cryptographicTimestamp: viewModel.records.last?.timestamp
+                cryptographicTimestamp: viewModel.records.last?.timestamp,
+                sessionID: viewModel.lastSessionID
             )
         }
         .sheet(item: $selectedRecord) { record in

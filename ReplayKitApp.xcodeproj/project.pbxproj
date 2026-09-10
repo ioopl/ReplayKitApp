@@ -88,6 +88,7 @@
 		BC1915BF30306A82006F54EB /* Exceptions for "ReplayKitApp" folder in "BroadcastExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"Frame Storage/EncryptedFrameStore.swift",
 				Keychain/KeychainManager.swift,
 				Keychain/KeychainService.swift,
 			);

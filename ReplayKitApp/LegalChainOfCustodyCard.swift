@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 
 /// Shared inspection card used by both the session and frame detail screens.
 /// The fingerprint is read from the persisted key at display time so it is
@@ -10,6 +11,7 @@ public struct LegalChainOfCustodyCard: View {
 
     @State private var fingerprint: String?
     @State private var fingerprintUnavailable = false
+    @State private var copiedValue: String?
 
     public init(chainHash: String? = nil, timestamp: String? = nil) {
         self.chainHash = chainHash
@@ -52,10 +54,11 @@ public struct LegalChainOfCustodyCard: View {
                 inspectionRow(
                     label: "Secure Enclave public key fingerprint",
                     value: fingerprint ?? (fingerprintUnavailable ? "Unavailable on this keychain" : "Reading live key…"),
-                    monospaced: true
+                    monospaced: true,
+                    copyable: fingerprint != nil
                 )
-                inspectionRow(label: "Cryptographic timestamp", value: displayedTimestamp, monospaced: true)
-                inspectionRow(label: "Chain Hash signature", value: displayedChainHash, monospaced: true)
+                inspectionRow(label: "Cryptographic timestamp", value: displayedTimestamp, monospaced: true, copyable: timestamp != nil)
+                inspectionRow(label: "Chain Hash signature", value: displayedChainHash, monospaced: true, copyable: chainHash != nil)
             }
         }
         .padding()
@@ -72,17 +75,27 @@ public struct LegalChainOfCustodyCard: View {
     }
 
     @ViewBuilder
-    private func inspectionRow(label: String, value: String, monospaced: Bool) -> some View {
+    private func inspectionRow(label: String, value: String, monospaced: Bool, copyable: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label)
                 .font(.caption)
                 .foregroundColor(.secondary)
-            Text(value)
-                .font(monospaced ? .system(.caption, design: .monospaced) : .caption)
-                .foregroundColor(.primary)
-                .textSelection(.enabled)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
+            HStack(alignment: .top) {
+                Text(value)
+                    .font(monospaced ? .system(.caption, design: .monospaced) : .caption)
+                    .foregroundColor(.primary)
+                    .textSelection(.enabled)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+                if copyable {
+                    Button(copiedValue == value ? "Copied" : "Copy") {
+                        UIPasteboard.general.string = value
+                        copiedValue = value
+                    }
+                    .font(.caption2.bold())
+                    .foregroundColor(.blue)
+                }
+            }
         }
     }
 

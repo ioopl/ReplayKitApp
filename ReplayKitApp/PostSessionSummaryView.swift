@@ -14,6 +14,7 @@ public struct PostSessionSummaryView: View {
     let onDeleteBuffer: (() -> Void)?
     let chainHash: String?
     let cryptographicTimestamp: String?
+    let sessionID: String?
     
     @State private var isCopied = false
     @State private var showDeleteAlert = false
@@ -26,7 +27,8 @@ public struct PostSessionSummaryView: View {
         onDismiss: @escaping () -> Void,
         onDeleteBuffer: (() -> Void)? = nil,
         chainHash: String? = nil,
-        cryptographicTimestamp: String? = nil
+        cryptographicTimestamp: String? = nil,
+        sessionID: String? = nil
     ) {
         self.title = title
         self.duration = duration
@@ -35,6 +37,7 @@ public struct PostSessionSummaryView: View {
         self.onDeleteBuffer = onDeleteBuffer
         self.chainHash = chainHash
         self.cryptographicTimestamp = cryptographicTimestamp
+        self.sessionID = sessionID
     }
     
     private var formattedDuration: String {
@@ -214,6 +217,10 @@ public struct PostSessionSummaryView: View {
                             chainHash: chainHash,
                             timestamp: cryptographicTimestamp
                         )
+
+                        if let sessionID {
+                            EncryptedFrameGalleryView(sessionID: sessionID)
+                        }
                         
                         // 6. Actions Card
                         VStack(spacing: 16) {
