@@ -6,12 +6,16 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct ReplayKitAppApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            PersistenceRecoveryView {
+                ContentView()
+            }
         }
+        .modelContainer(for: [RecordingDocumentEntity.self, FrameEntity.self])
     }
 }

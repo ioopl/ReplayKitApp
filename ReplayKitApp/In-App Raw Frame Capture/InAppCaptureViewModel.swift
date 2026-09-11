@@ -20,6 +20,7 @@ public class InAppCaptureViewModel: ObservableObject {
     @Published public var showSummary = false
     @Published public var lastSessionDuration: TimeInterval = 0
     @Published public var lastSessionSize: Int64 = 0
+    @Published public var encryptedVideoReady = false
     
     @Published public var records: [FrameRecord] = []
 
@@ -127,6 +128,7 @@ public class InAppCaptureViewModel: ObservableObject {
         }
         currentVideoURL = fileURL
         lastVideoURL = nil
+        encryptedVideoReady = false
         
         do {
             let writer = try AVAssetWriter(url: fileURL, fileType: .mp4)
@@ -180,6 +182,7 @@ public class InAppCaptureViewModel: ObservableObject {
             try? FileManager.default.removeItem(at: url)
         }
         lastVideoURL = nil
+        encryptedVideoReady = false
         lastSessionSize = 0
         try? EncryptedFrameStore.shared.deleteSession(sessionID)
     }
@@ -264,12 +267,29 @@ public class InAppCaptureViewModel: ObservableObject {
                         }
                         
                         if let url = self.currentVideoURL {
-                            let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
-                            let fileSize = attributes?[.size] as? Int64 ?? 0
-                            
-                            DispatchQueue.main.async {
-                                self.lastVideoURL = url
-                                self.lastSessionSize = fileSize
+                            do {
+                                guard let key = try self.keychainService.getSymmetricKey() else {
+                                    throw NSError(
+                                        domain: "InAppCapture",
+                                        code: 1,
+                                        userInfo: [NSLocalizedDescriptionKey: "The session encryption key is unavailable."]
+                                    )
+                                }
+
+                                let encryptedSize = try EncryptedFrameStore.shared.persistVideoFile(
+                                    at: url,
+                                    sessionID: self.sessionID,
+                                    using: key
+                                )
+                                DispatchQueue.main.async {
+                                    self.lastVideoURL = nil
+                                    self.encryptedVideoReady = true
+                                    self.lastSessionSize = encryptedSize
+                                }
+                            } catch {
+                                DispatchQueue.main.async {
+                                    self.errorMessage = "Could not encrypt the finished video: \(error.localizedDescription)"
+                                }
                             }
                         }
                         continuation.resume()

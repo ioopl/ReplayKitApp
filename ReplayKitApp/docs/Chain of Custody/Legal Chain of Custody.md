@@ -25,21 +25,86 @@ These are related layers, but they answer different questions:[See image attache
 
 The card combines local evidence from the first two layers. It does not turn that evidence into Apple App Attest verification. App Attest is documented in [Apple DeviceCheck - App Attest](App Attest/App Attest-Apple DeviceCheck.md)
 
-## What the current App produces
+## Current frame and thumbnail storage
 
-- [ ] Store a small durable session catalog in the App Group containing
-  session ID, creation time, frame count, manifest location, and deletion
-  state.
-- [ ] Enumerate and recover valid `EncryptedFrames/<sessionID>` directories on
-  app launch instead of relying only on in-memory view-model state.
-- [ ] Validate each manifest and confirm the Keychain key is available before
-  showing a recovered session.
-- [ ] Show recovered sessions in a “Saved Sessions” gallery with explicit
-  retention and delete controls.
-- [ ] Handle missing keys, partial writes, corrupted manifests, and orphaned
-  directories with a visible recovery status rather than silently hiding them.
+The current ledger is primarily an in-memory inspection view; it is not an
+encrypted image gallery.
 
-## Proposed encrypted frame gallery
+### In-App Capture
+
+- Each processed frame is converted to JPEG and encrypted with AES-GCM during
+  `InAppCaptureViewModel.processAndEncryptFrame`.
+- The encrypted payload is also persisted by `EncryptedFrameStore` as an
+  authenticated file in the shared App Group container.
+- A sealed thumbnail is stored beside the sealed frame payload. The UI only
+  decrypts it into a `UIImage` when it needs to render a preview.
+- The in-app records array is capped at the most recent 20 records and is
+  cleared when a new capture starts.
+- The separately finalized MP4 is written to a temporary URL by the video
+  writer and is not the same thing as the per-frame AES-GCM payload.
+
+### System-wide Broadcast
+
+- The Broadcast Upload Extension creates and AES-GCM-encrypts the JPEG frame
+  for the streaming pipeline and persists the same frame through
+  `EncryptedFrameStore`.
+- Every tenth frame still writes a small live ledger entry to App Group
+  `UserDefaults`, but that entry now contains metadata only; thumbnail bytes
+  are not stored there.
+- The host app decrypts thumbnails when loading the live ledger. The complete
+  session gallery reads the encrypted-frame manifest from the App Group store.
+- The system-wide MP4 output is written separately by the broadcast writer;
+  its current file path and the per-frame sealed payload are separate storage
+  paths.
+
+### What tapping a frame does
+
+When the user taps a row in `FrameIntegrityLedgerView`, the app selects the
+existing in-memory `FrameRecord` and presents `FrameDetailView`. The
+session-summary gallery behaves differently: it authenticates the sealed
+AES-GCM payload and thumbnail, recomputes the chain hash, and only then opens
+the verified image in `FrameDetailView`.
+
+The live ledger remains a lightweight preview. The session summary is the
+encrypted-frame gallery.
+
+## Persistence, sandboxing, and app restart behavior
+
+`EncryptedFrameStore` writes to the App Group container returned by
+`containerURL(forSecurityApplicationGroupIdentifier:)`. This is still
+sandboxed storage: only the signed host app and its configured extension can
+access it. It is not publicly accessible like Photos or a web server.
+
+The frame payload and thumbnail files are encrypted with AES-GCM and written
+with iOS file-protection options. The symmetric key remains in the shared
+Keychain. This gives defense in depth: App Group sandboxing controls which
+processes can reach the files, while AES-GCM protects the bytes if the files
+are copied without the key.
+
+The encrypted files normally survive:
+
+- capture completion;
+- force-quit and app relaunch;
+- device restart;
+- app updates, provided the App Group identifier and Keychain configuration
+  remain unchanged.
+
+They are removed when the user deletes the local buffer, and they should not
+be treated as uninstall-proof archival storage. Uninstalling the app, changing
+the App Group, losing the encryption key, or a deliberate retention/cleanup
+policy can make the files unavailable.
+
+### Current restart behavior
+
+SwiftData now provides the durable session catalog, and the app scans surviving
+`EncryptedFrames/<sessionID>` directories at launch to import sessions that are
+missing from that catalog. The Session Summary displays the resulting catalog
+status and encrypted frame count. A full user-facing “Saved Sessions” history
+screen and richer missing-key/corruption recovery actions remain follow-up UI
+work; recovered data is not silently presented as verified when its manifest or
+key cannot be used.
+
+## Encrypted frame gallery
 
 The session-summary gallery uses this storage contract:
 
@@ -47,10 +112,11 @@ The session-summary gallery uses this storage contract:
    Group file using a session/frame identifier. Store the AES-GCM combined
    representation (nonce, ciphertext, and authentication tag), not plaintext
    JPEG bytes.
-2. Store a versioned manifest containing frame index, hash values, chain
-   values, timestamp, resolution, payload path, and session ID. The current
-   manifest is a small JSON index; authenticating/encrypting the manifest itself
-   remains a hardening TODO.
+2. Store a manifest containing frame index, hash values, chain values,
+   timestamp, resolution, payload path, and session ID. The manifest is still a
+   small JSON index; authenticating/encrypting the manifest itself remains a
+   hardening TODO and must be completed before treating the manifest alone as
+   tamper-evident evidence.
 3. Store gallery thumbnails as separately sealed AES-GCM payloads. A thumbnail
    can be decrypted only when the gallery/detail screen needs to render it;
    the resulting `UIImage` should remain in memory only.
@@ -231,3 +297,67 @@ The first step improves honesty and usability without requiring a backend. A
 backend becomes necessary when the product needs a remote party to trust the
 capture as an authentic app/device event rather than merely inspect locally
 consistent evidence.
+
+## Durable persistence implementation
+
+The app now has two complementary stores:
+
+1. SwiftData is the searchable catalog. `RecordingDocumentEntity` is the
+   recording/document row (the conceptual `tblDocs` table), and `FrameEntity`
+   is its child ledger row (the conceptual `tblFrames` table). Each frame has a
+   relationship to its parent document and the document owns the frames with a
+   cascade delete rule.
+2. The App Group directory is the encrypted evidence store. AES-GCM frame
+   payloads, thumbnails, and the encrypted video remain files because large
+   binary media should not be placed inside database rows. SwiftData stores
+   their metadata and filenames, not the image/video bytes.
+
+The local `userID` is a generated app identity. It must not be confused with
+the Secure Enclave public-key fingerprint: a fingerprint identifies the
+cryptographic key/device context, while a user ID identifies the local account
+(or, later, a server account). If a backend is added, the server account ID
+should replace or supplement the local ID; the key fingerprint remains a
+separate evidence field.
+
+At app launch, `PersistenceRecoveryView` scans the encrypted App Group session
+directories and imports any session not already present in SwiftData. This is
+why a force-quit, relaunch, or device restart no longer loses the app's ability
+to rediscover saved frame evidence. The Session Summary also shows a small
+Persistence card with the catalog status, encrypted frame count, and validation
+message.
+
+The five recovery concerns are:
+
+1. Durable session catalog: SwiftData keeps the document/session list on disk.
+2. Session recovery at launch: the app scans surviving encrypted session
+   folders and rebuilds missing catalog rows.
+3. Manifest/key validation: the app checks that metadata is present and that
+   the key is available before treating evidence as usable; missing keys or
+   corrupt authenticated files must be shown as a recovery failure, never as a
+   green verification.
+4. Saved Sessions UI: the history screen queries `RecordingDocumentEntity` and
+   opens recovered sessions rather than relying on the last in-memory capture.
+5. Recovery states: the UI should distinguish saved/verified, saving,
+   missing-key, corrupted-file, unsupported-device, and deleted states.
+
+## Encrypted MP4 playback
+
+The frame gallery and the MP4 are different artifacts. `AVAssetWriter` creates
+an ordinary MP4 stream, so encrypting the individual JPEG evidence frames does
+not automatically encrypt the separately generated MP4. The app now encrypts
+the completed MP4 in authenticated AES-GCM chunks, writes
+`recording.mp4.enc`, applies file protection, and removes the plaintext writer
+output. The MP4 is therefore encrypted at rest in the App Group container.
+
+When the user taps Play, the app decrypts the chunks into a protected temporary
+playback file, gives that URL to `AVPlayer`, and deletes the temporary plaintext
+file when the player disappears. This is necessary because `AVPlayer` cannot
+play a custom AES-GCM file format directly. A future hardened implementation
+could use a custom byte-range resource loader, but it would still need to
+decrypt media bytes for the decoder; the current temporary-file flow is simpler
+and easier to audit.
+
+Saving a copy to Photos is intentionally separate: Photos is user-controlled
+exported storage and may contain a plaintext playable copy. The app's private
+local recording remains encrypted at rest, but “saved to Photos” should not be
+described as encrypted private storage.

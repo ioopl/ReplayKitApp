@@ -207,7 +207,8 @@ public struct FrameDetailView: View {
                     // 6. Legal chain of custody and integrity inspection
                     LegalChainOfCustodyCard(
                         chainHash: record.chainHash,
-                        timestamp: record.timestamp
+                        timestamp: record.timestamp,
+                        sessionID: record.sessionID
                     )
 
                     // 7. Encryption Section

@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import UIKit
+import SwiftData
 
 /// Shared inspection card used by both the session and frame detail screens.
 /// The fingerprint is read from the persisted key at display time so it is
@@ -8,24 +9,33 @@ import UIKit
 public struct LegalChainOfCustodyCard: View {
     let chainHash: String?
     let timestamp: String?
+    let sessionID: String?
+    @Query private var documents: [RecordingDocumentEntity]
 
     @State private var fingerprint: String?
     @State private var fingerprintUnavailable = false
     @State private var copiedValue: String?
 
-    public init(chainHash: String? = nil, timestamp: String? = nil) {
+    public init(chainHash: String? = nil, timestamp: String? = nil, sessionID: String? = nil) {
         self.chainHash = chainHash
         self.timestamp = timestamp
+        self.sessionID = sessionID
+    }
+
+    private var storedDocument: RecordingDocumentEntity? {
+        guard let sessionID else { return nil }
+        return documents.first { $0.sessionID == sessionID }
     }
 
     private var displayedTimestamp: String {
-        timestamp ?? ISO8601DateFormatter().string(from: Date())
+        storedDocument?.cryptographicTimestamp ?? timestamp ?? "Unavailable"
     }
 
     private var displayedChainHash: String {
-        guard let chainHash, !chainHash.isEmpty else { return "Unavailable" }
-        guard chainHash.count > 12 else { return chainHash }
-        return "\(chainHash.prefix(8))...\(chainHash.suffix(8))"
+        let source = storedDocument?.finalChainHash ?? chainHash
+        guard let source, !source.isEmpty else { return "Unavailable" }
+        guard source.count > 12 else { return source }
+        return "\(source.prefix(8))...\(source.suffix(8))"
     }
 
     public var body: some View {
@@ -40,7 +50,7 @@ public struct LegalChainOfCustodyCard: View {
                         .font(.caption2.bold())
                         .foregroundColor(.secondary)
 
-                    Label("Hardware-Enclave Attestation — Verified (NOTE: Secure Enclave Key Integrity - used for now before App Attest Server verification is fully implemented)", systemImage: "checkmark.circle.fill")
+                    Label("Secure Enclave key integrity — Local verification", systemImage: "checkmark.circle.fill")
                         .font(.subheadline.bold())
                         .foregroundColor(.green)
 
@@ -53,9 +63,9 @@ public struct LegalChainOfCustodyCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 inspectionRow(
                     label: "Secure Enclave public key fingerprint",
-                    value: fingerprint ?? (fingerprintUnavailable ? "Unavailable on this keychain" : "Reading live key…"),
+                        value: storedDocument?.keyFingerprint ?? fingerprint ?? (fingerprintUnavailable ? "Unavailable on this keychain" : "Reading live key…"),
                     monospaced: true,
-                    copyable: fingerprint != nil
+                    copyable: fingerprint != nil || storedDocument?.keyFingerprint != nil
                 )
                 inspectionRow(label: "Cryptographic timestamp", value: displayedTimestamp, monospaced: true, copyable: timestamp != nil)
                 inspectionRow(label: "Chain Hash signature", value: displayedChainHash, monospaced: true, copyable: chainHash != nil)

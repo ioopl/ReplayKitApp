@@ -194,7 +194,8 @@ public struct SystemWideScreenBroadcastView: View {
                 },
                 chainHash: viewModel.records.last?.chainHash,
                 cryptographicTimestamp: viewModel.records.last?.timestamp,
-                sessionID: viewModel.lastSessionID
+                sessionID: viewModel.lastSessionID,
+                encryptedVideoSessionID: viewModel.lastSessionID.flatMap { EncryptedFrameStore.shared.hasEncryptedVideo(sessionID: $0) ? $0 : nil }
             )
         }
         .sheet(item: $selectedRecord) { record in

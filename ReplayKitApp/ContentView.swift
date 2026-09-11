@@ -4,7 +4,35 @@ struct ContentView: View {
     @State private var showSettings = false
     
     var body: some View {
-        NavigationStack {
+        TabView {
+            NavigationStack {
+                SavedSessionsView()
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button(action: { showSettings = true }) {
+                                Image(systemName: "gearshape.fill")
+                            }
+                            .accessibilityLabel("Settings")
+                        }
+                    }
+            }
+            .tabItem {
+                Label("Home", systemImage: "house.fill")
+            }
+
+            NavigationStack {
+                captureMenu
+            }
+            .tabItem {
+                Label("Capture", systemImage: "record.circle")
+            }
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+        }
+    }
+
+    private var captureMenu: some View {
             ScrollView {
                 VStack(spacing: 24) {
                     // Header Section
@@ -90,10 +118,6 @@ struct ContentView: View {
                     .accessibilityLabel("Settings")
                 }
             }
-            .sheet(isPresented: $showSettings) {
-                SettingsView()
-            }
-        }
     }
 }
 

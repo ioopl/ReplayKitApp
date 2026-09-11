@@ -9,6 +9,14 @@
 let decryptedData = try AES.GCM.open(sealedBox, using: symmetricKey)
 let image = UIImage(data: decryptedData)
 ```
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
+
+# In-App MP4 Recording
+The encrypted MP4 is decrypted into a temporary playback file before AVPlayer starts, so a 500 MB recording will take noticeably longer than a 10 MB recording.
+For larger recordings, the user may eventually see a delay. 
+----------------------------------------------------------------------------
+----------------------------------------------------------------------------
 
 ## - The raw image payload is never transmitted unencrypted over the network.
 

@@ -108,7 +108,7 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
                         await self.finalizeBroadcastOutput()
                     }
                 }
-                
+
                 // While broadcasting: poll frame metadata every tick
                 if self.isBroadcasting {
                     self.loadFrameMetadata()
@@ -235,12 +235,27 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
 
         if sessionMatches, let fileURL, fileExists, fileSize > 512 {
             print("🟢 [Finalize] Using REAL broadcast.mp4 — size=\(fileSize) bytes")
-            lastVideoURL = fileURL
-            lastSessionSize = fileSize
             do {
                 try await photosLibraryService.saveVideo(at: fileURL)
-                photosSaveMessage = "Broadcast saved to Photos."
+                guard let key = try keychainService.getSymmetricKey() else {
+                    throw NSError(
+                        domain: "SystemWideBroadcast",
+                        code: 1,
+                        userInfo: [NSLocalizedDescriptionKey: "The session encryption key is unavailable."]
+                    )
+                }
+
+                let encryptedSize = try EncryptedFrameStore.shared.persistVideoFile(
+                    at: fileURL,
+                    sessionID: activeBroadcastSessionID ?? finishedSessionID ?? UUID().uuidString,
+                    using: key
+                )
+                lastVideoURL = nil
+                lastSessionSize = encryptedSize
+                photosSaveMessage = "Broadcast saved to Photos and encrypted locally."
             } catch {
+                lastVideoURL = fileURL
+                lastSessionSize = fileSize
                 photosSaveMessage = "Broadcast saved to App Group buffer."
             }
         } else {

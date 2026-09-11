@@ -1,5 +1,6 @@
 import SwiftUI
 import AVKit
+import SwiftData
 
 public enum SessionMode {
     case local(videoURL: URL?, fileSize: Int64)
@@ -15,6 +16,8 @@ public struct PostSessionSummaryView: View {
     let chainHash: String?
     let cryptographicTimestamp: String?
     let sessionID: String?
+    let encryptedVideoSessionID: String?
+    @Environment(\.modelContext) private var modelContext
     
     @State private var isCopied = false
     @State private var showDeleteAlert = false
@@ -28,7 +31,8 @@ public struct PostSessionSummaryView: View {
         onDeleteBuffer: (() -> Void)? = nil,
         chainHash: String? = nil,
         cryptographicTimestamp: String? = nil,
-        sessionID: String? = nil
+        sessionID: String? = nil,
+        encryptedVideoSessionID: String? = nil
     ) {
         self.title = title
         self.duration = duration
@@ -38,6 +42,7 @@ public struct PostSessionSummaryView: View {
         self.chainHash = chainHash
         self.cryptographicTimestamp = cryptographicTimestamp
         self.sessionID = sessionID
+        self.encryptedVideoSessionID = encryptedVideoSessionID
     }
     
     private var formattedDuration: String {
@@ -130,7 +135,12 @@ public struct PostSessionSummaryView: View {
                             VStack {
                                 switch mode {
                                 case .local(let videoURL, _):
-                                    if let url = videoURL {
+                                    if let encryptedVideoSessionID {
+                                        EncryptedVideoPlayerView(sessionID: encryptedVideoSessionID)
+                                            .frame(height: 200)
+                                            .cornerRadius(16)
+                                            .shadow(radius: 4)
+                                    } else if let url = videoURL {
                                         VideoPlayer(player: AVPlayer(url: url))
                                             .frame(height: 200)
                                             .cornerRadius(16)
@@ -215,10 +225,12 @@ public struct PostSessionSummaryView: View {
                         // 5. Legal chain of custody and integrity inspection
                         LegalChainOfCustodyCard(
                             chainHash: chainHash,
-                            timestamp: cryptographicTimestamp
+                            timestamp: cryptographicTimestamp,
+                            sessionID: sessionID
                         )
 
                         if let sessionID {
+                            PersistenceStatusCard(sessionID: sessionID)
                             EncryptedFrameGalleryView(sessionID: sessionID)
                         }
                         
@@ -298,6 +310,23 @@ public struct PostSessionSummaryView: View {
             }
             .navigationTitle("Session Summary")
             .navigationBarTitleDisplayMode(.inline)
+            .task {
+                guard let sessionID else { return }
+                let fingerprint = (try? SharedKeychainManager.shared.publicKeyFingerprint()) ?? "Unavailable"
+                let storedMetadata = (try? EncryptedFrameStore.shared.metadata(for: sessionID)) ?? []
+                try? RecordingPersistence.importSession(
+                    sessionID: sessionID,
+                    duration: duration,
+                    finalChainHash: chainHash ?? storedMetadata.last?.chainHash ?? "Unavailable",
+                    cryptographicTimestamp: cryptographicTimestamp ?? storedMetadata.last?.timestamp ?? "Unavailable",
+                    keyFingerprint: fingerprint,
+                    videoSize: {
+                        if case .local(_, let size) = mode { return size }
+                        return 0
+                    }(),
+                    context: modelContext
+                )
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {

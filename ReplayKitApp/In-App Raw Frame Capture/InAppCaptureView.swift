@@ -181,7 +181,8 @@ public struct InAppCaptureView: View {
                 },
                 chainHash: viewModel.records.last?.chainHash,
                 cryptographicTimestamp: viewModel.records.last?.timestamp,
-                sessionID: viewModel.currentSessionID
+                sessionID: viewModel.currentSessionID,
+                encryptedVideoSessionID: viewModel.encryptedVideoReady ? viewModel.currentSessionID : nil
             )
         }
         .sheet(item: $selectedRecord) { record in
