@@ -8,6 +8,7 @@ import SwiftData
 public final class RecordingDocumentEntity {
     @Attribute(.unique) public var id: UUID
     @Attribute(.unique) public var sessionID: String
+    public var title: String
     public var userID: String
     public var createdAt: Date
     public var duration: Double
@@ -26,6 +27,7 @@ public final class RecordingDocumentEntity {
     public init(sessionID: String, userID: String, createdAt: Date = .now) {
         self.id = UUID()
         self.sessionID = sessionID
+        self.title = "Recording \(Self.displayDate.string(from: createdAt))"
         self.userID = userID
         self.createdAt = createdAt
         self.duration = 0
@@ -38,6 +40,13 @@ public final class RecordingDocumentEntity {
         self.persistenceStatus = "pending"
         self.validationMessage = "Waiting for encrypted artifacts."
     }
+
+    private static let displayDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
 }
 
 @Model
