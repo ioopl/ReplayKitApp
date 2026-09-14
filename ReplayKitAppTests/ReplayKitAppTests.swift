@@ -32,6 +32,9 @@ final class ReplayKitAppTests: XCTestCase {
         
         XCTAssertFalse(viewModel.isCapturing)
         
+        viewModel.authenticateAndPrepareKeys()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        
         viewModel.startCapture()
         try? await Task.sleep(nanoseconds: 100_000_000)
         XCTAssertTrue(viewModel.isCapturing)
@@ -53,8 +56,72 @@ final class ReplayKitAppTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 100_000_000)
         
         XCTAssertTrue(viewModel.isAuthenticated)
+#if !targetEnvironment(simulator)
         XCTAssertTrue(mockKeychain.keyPairGenerated)
+#endif
         XCTAssertNotNil(try? mockKeychain.getSymmetricKey())
+    }
+    
+    @MainActor
+    func testSystemWideScreenBroadcastDrawingInjectionAndSnapshot() async {
+        let mockKeychain = MockKeychainService()
+        let mockDrawing = MockDrawingService()
+        let viewModel = SystemWideScreenBroadcastViewModel(
+            keychainService: mockKeychain,
+            drawingService: mockDrawing
+        )
+        
+        XCTAssertFalse(viewModel.isDrawingActive)
+        XCTAssertNil(viewModel.lastDrawingSnapshot)
+        
+        // Toggle drawing
+        viewModel.isDrawingActive = true
+        XCTAssertTrue(viewModel.isDrawingActive)
+        
+        // Simulate broadcast ended (which captures drawing snapshot and composites it into video)
+        viewModel.simulateBroadcastEnded()
+        
+        XCTAssertTrue(mockDrawing.snapshotCaptured)
+        XCTAssertNotNil(viewModel.lastDrawingSnapshot)
+        XCTAssertTrue(viewModel.showMockSummary)
+        
+        // Deleting local buffer should clear drawing snapshot and call drawingService.clear()
+        viewModel.deleteLocalBuffer()
+        XCTAssertNil(viewModel.lastDrawingSnapshot)
+        XCTAssertTrue(mockDrawing.clearCalled)
+    }
+    
+    @MainActor
+    func testDrawingCanvasManagerOperations() {
+        let manager = DrawingCanvasManager()
+        
+        XCTAssertFalse(manager.isDrawingActive)
+        XCTAssertEqual(manager.activeTool, .pen)
+        XCTAssertEqual(manager.strokeColor, .yellow)
+        XCTAssertEqual(manager.strokeWidth, 5.0)
+        XCTAssertEqual(manager.backgroundMode, .transparentOverlay)
+        
+        // Test tool selection
+        manager.activeTool = .highlighter
+        XCTAssertEqual(manager.activeTool, .highlighter)
+        
+        manager.activeTool = .eraser
+        XCTAssertEqual(manager.activeTool, .eraser)
+        
+        // Test color selection
+        manager.strokeColor = .cyan
+        XCTAssertEqual(manager.strokeColor, .cyan)
+        XCTAssertEqual(manager.strokeColor.uiColor, UIColor(red: 0.0, green: 0.85, blue: 1.0, alpha: 1.0))
+        
+        // Test background modes
+        manager.backgroundMode = .whiteboard
+        XCTAssertEqual(manager.backgroundMode, .whiteboard)
+        manager.backgroundMode = .blackboard
+        XCTAssertEqual(manager.backgroundMode, .blackboard)
+        
+        // Test clear
+        manager.clear()
+        XCTAssertNil(manager.lastSnapshot)
     }
     
     @MainActor

@@ -17,6 +17,7 @@ public struct PostSessionSummaryView: View {
     let cryptographicTimestamp: String?
     let sessionID: String?
     let encryptedVideoSessionID: String?
+    let drawingSnapshot: UIImage?
     @Environment(\.modelContext) private var modelContext
     
     @State private var isCopied = false
@@ -32,7 +33,8 @@ public struct PostSessionSummaryView: View {
         chainHash: String? = nil,
         cryptographicTimestamp: String? = nil,
         sessionID: String? = nil,
-        encryptedVideoSessionID: String? = nil
+        encryptedVideoSessionID: String? = nil,
+        drawingSnapshot: UIImage? = nil
     ) {
         self.title = title
         self.duration = duration
@@ -43,6 +45,7 @@ public struct PostSessionSummaryView: View {
         self.cryptographicTimestamp = cryptographicTimestamp
         self.sessionID = sessionID
         self.encryptedVideoSessionID = encryptedVideoSessionID
+        self.drawingSnapshot = drawingSnapshot
     }
     
     private var formattedDuration: String {
@@ -195,6 +198,40 @@ public struct PostSessionSummaryView: View {
                                     }
                                 }
                             }
+                            .padding(.horizontal)
+                        }
+                        
+                        if let drawing = drawingSnapshot {
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack {
+                                    Label("Screen Drawing Annotations", systemImage: "pencil.and.outline")
+                                        .font(.headline)
+                                        .foregroundColor(.purple)
+                                    Spacer()
+                                    Text("Captured Live")
+                                        .font(.caption2.bold())
+                                        .foregroundColor(.green)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(Color.green.opacity(0.15))
+                                        .clipShape(Capsule())
+                                }
+                                
+                                Image(uiImage: drawing)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxHeight: 180)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color(.systemGray6))
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                                    )
+                            }
+                            .padding()
+                            .background(Color(.tertiarySystemBackground))
+                            .cornerRadius(16)
                             .padding(.horizontal)
                         }
                         

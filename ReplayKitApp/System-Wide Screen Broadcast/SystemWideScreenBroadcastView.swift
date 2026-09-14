@@ -6,12 +6,14 @@ public struct SystemWideScreenBroadcastView: View {
     @ObservedObject private var settings = CaptureSettings.shared
     @State private var selectedRecord: FrameRecord? = nil
     @State private var showSettings = false
+    @State private var isDrawingMode = true
 
     public init() {}
 
     public var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
+        ZStack {
+            ScrollView {
+                VStack(spacing: 24) {
             ScrollView {
                 Text("Launch the system broadcast picker to record and stream using the Broadcast Upload Extension. This option captures the entire iOS screen (Home screen, other apps, notifications). It spawns a separate system process (the Broadcast Upload Extension).")
                     .font(.body)
@@ -90,6 +92,33 @@ public struct SystemWideScreenBroadcastView: View {
                     .padding(.horizontal)
             }
             
+            // Live Screen Telestrator / Drawing Card
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Image(systemName: "scribble")
+                        .font(.title2)
+                        .foregroundColor(.purple)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Live Screen Telestrator")
+                            .font(.headline)
+                        Text("Draw notes, circle items, or sketch on screen while broadcasting.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Toggle("", isOn: $viewModel.isDrawingActive)
+                        .labelsHidden()
+                }
+            }
+            .padding()
+            .background(Color.purple.opacity(0.08))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.purple.opacity(0.25), lineWidth: 1)
+            )
+            .padding(.horizontal)
+            
             Spacer()
             
             if !viewModel.isAuthenticated {
@@ -156,9 +185,34 @@ public struct SystemWideScreenBroadcastView: View {
             }
         }
         .padding()
+        }
+        
+        // Live Screen Drawing Overlay (PencilKit + Floating Telestrator Bar)
+        if viewModel.isDrawingActive {
+            DrawingCanvasContainerView(
+                manager: (viewModel.drawingService as? DrawingCanvasManager) ?? DrawingCanvasManager.shared,
+                isDrawingMode: $isDrawingMode,
+                isBroadcasting: viewModel.isBroadcasting
+            )
+            .transition(.opacity)
+        }
+        }
         .navigationTitle("System-Wide Screen Broadcast")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    withAnimation {
+                        viewModel.isDrawingActive.toggle()
+                    }
+                }) {
+                    Image(systemName: viewModel.isDrawingActive ? "scribble.variable" : "scribble")
+                        .font(.body)
+                        .foregroundColor(viewModel.isDrawingActive ? .purple : .primary)
+                }
+                .accessibilityLabel(viewModel.isDrawingActive ? "Hide Drawing Canvas" : "Show Drawing Canvas")
+            }
+            
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
                     showSettings = true
@@ -195,7 +249,8 @@ public struct SystemWideScreenBroadcastView: View {
                 chainHash: viewModel.records.last?.chainHash,
                 cryptographicTimestamp: viewModel.records.last?.timestamp,
                 sessionID: viewModel.lastSessionID,
-                encryptedVideoSessionID: viewModel.lastSessionID.flatMap { EncryptedFrameStore.shared.hasEncryptedVideo(sessionID: $0) ? $0 : nil }
+                encryptedVideoSessionID: viewModel.lastSessionID.flatMap { EncryptedFrameStore.shared.hasEncryptedVideo(sessionID: $0) ? $0 : nil },
+                drawingSnapshot: viewModel.lastDrawingSnapshot
             )
         }
         .sheet(item: $selectedRecord) { record in
@@ -205,9 +260,8 @@ public struct SystemWideScreenBroadcastView: View {
             // Sync pipeline setting each time this view appears so SampleHandler always has the latest
             viewModel.syncPipelineToAppGroup()
         }
-            .onChange(of: settings.hashingPipeline) { _ in
-                viewModel.syncPipelineToAppGroup()
-            }
+        .onChange(of: settings.hashingPipeline) { _ in
+            viewModel.syncPipelineToAppGroup()
         }
     }
 }

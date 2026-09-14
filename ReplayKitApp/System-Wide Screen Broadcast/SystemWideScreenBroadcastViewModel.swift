@@ -24,6 +24,11 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     @Published public var records: [FrameRecord] = []
     @Published public var lastSessionID: String?
     
+    // Live Screen Drawing Properties
+    @Published public var isDrawingActive: Bool = false
+    @Published public var lastDrawingSnapshot: UIImage?
+    public let drawingService: DrawingServiceProtocol
+    
     private let keychainService: KeychainServiceProtocol
     private let photosLibraryService: PhotosLibraryServiceProtocol
     private var pollingTimer: Timer?
@@ -36,10 +41,12 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     @MainActor
     public init(
         keychainService: KeychainServiceProtocol = SharedKeychainManager.shared,
-        photosLibraryService: PhotosLibraryServiceProtocol? = nil
+        photosLibraryService: PhotosLibraryServiceProtocol? = nil,
+        drawingService: DrawingServiceProtocol? = nil
     ) {
         self.keychainService = keychainService
         self.photosLibraryService = photosLibraryService ?? PhotosLibraryService.shared
+        self.drawingService = drawingService ?? DrawingCanvasManager.shared
         clearStaleBroadcastState()
         startMonitoringBroadcast()
     }
@@ -280,6 +287,10 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
 #endif
         }
 
+        if let snapshot = drawingService.captureSnapshot(size: CGSize(width: 640, height: 480)) {
+            self.lastDrawingSnapshot = snapshot
+        }
+
         loadFrameMetadata()
         showSummary = true
     }
@@ -296,10 +307,15 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
         lastVideoURL = nil
         lastSessionSize = 0
         lastSessionID = nil
+        lastDrawingSnapshot = nil
+        drawingService.clear()
     }
     
     public func simulateBroadcastEnded() {
         self.lastSessionDuration = 125 // 2 min 5 seconds
+        if let snapshot = drawingService.captureSnapshot(size: CGSize(width: 640, height: 480)) {
+            self.lastDrawingSnapshot = snapshot
+        }
         if self.lastVideoURL == nil || !FileManager.default.fileExists(atPath: self.lastVideoURL!.path) {
             self.lastVideoURL = createSampleVideoFile()
             if let url = self.lastVideoURL {
@@ -391,6 +407,13 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
                     let barWidth = 440.0 * progress
                     context.addPath(CGPath(roundedRect: CGRect(x: 100, y: 170, width: barWidth, height: 24), cornerWidth: 12, cornerHeight: 12, transform: nil))
                     context.fillPath()
+                    
+                    // Composite live screen drawing onto the frame if present
+                    if let drawing = self.lastDrawingSnapshot {
+                        UIGraphicsPushContext(context)
+                        drawing.draw(in: CGRect(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height)))
+                        UIGraphicsPopContext()
+                    }
                 }
             }
             CVPixelBufferUnlockBaseAddress(buffer, [])
