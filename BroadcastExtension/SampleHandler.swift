@@ -25,12 +25,20 @@ public class SampleHandler: RPBroadcastSampleHandler {
     
     private var symmetricKey: SymmetricKey?
     private let ciContext = CIContext(options: [.useSoftwareRenderer: false])
+    private let overlayCacheLock = NSLock()
+    private var cachedOverlayImage: CIImage?
+    private var cachedOverlayTimestamp: TimeInterval = 0
     
     // Video writing variables
     private var assetWriter: AVAssetWriter?
     private var assetWriterInput: AVAssetWriterInput?
     private var pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor?
     private let writerQueue = DispatchQueue(label: "com.apkia.replaykitapp.broadcast-writer-queue")
+    // Keep at most one conversion waiting for the writer. ReplayKit can
+    // deliver faster than AVAssetWriter/CIContext can encode, and an
+    // unbounded async queue retains CMSampleBuffers until the extension is
+    // killed for memory pressure (reported by ReplayKit as an invalid session).
+    private var isAppendingWriterFrame = false
     private var hasStartedSession = false
     private var videoSampleCount = 0
     private var receivedSampleCount = 0
@@ -79,6 +87,10 @@ public class SampleHandler: RPBroadcastSampleHandler {
         receivedSampleCount = 0
         videoBufferCount = 0
         videoFormatDescription = ""
+        overlayCacheLock.lock()
+        cachedOverlayImage = nil
+        cachedOverlayTimestamp = 0
+        overlayCacheLock.unlock()
         
         // Clear any prior frame metadata from App Group
         if let defaults = UserDefaults(suiteName: groupID) {
@@ -134,7 +146,9 @@ public class SampleHandler: RPBroadcastSampleHandler {
                let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
                 videoFormatDescription = "\(CVPixelBufferGetWidth(imageBuffer))x\(CVPixelBufferGetHeight(imageBuffer)), pixelFormat=\(CVPixelBufferGetPixelFormatType(imageBuffer))"
             }
-            // 1. ALWAYS send video frames to AVAssetWriter so the recording file receives full 60 FPS screen frames
+            // 1. Send video frames to AVAssetWriter. The writer path is
+            // bounded so a slow composite/encode cannot retain the whole
+            // broadcast in memory.
             self.appendFrameToAssetWriter(sampleBuffer)
             
             // 2. Query current processing status for encryption/ledger processing
@@ -223,9 +237,20 @@ public class SampleHandler: RPBroadcastSampleHandler {
         
         let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         guard pts.isValid else { return }
+
+        var shouldAppend = false
+        writerQueue.sync {
+            if !self.isAppendingWriterFrame {
+                self.isAppendingWriterFrame = true
+                shouldAppend = true
+            }
+        }
+        guard shouldAppend else { return }
         
         writerQueue.async { [weak self] in
             guard let self = self else { return }
+            defer { self.isAppendingWriterFrame = false }
+            autoreleasepool {
             
             if self.assetWriterInput == nil {
                 guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
@@ -292,6 +317,7 @@ public class SampleHandler: RPBroadcastSampleHandler {
             } else if writer.status == .failed {
                 self.printWriterError("status", writer)
             }
+            }
         }
     }
 
@@ -338,7 +364,7 @@ public class SampleHandler: RPBroadcastSampleHandler {
         )
         guard status == kCVReturnSuccess, let outputBuffer else { return nil }
 
-        let image = CIImage(cvPixelBuffer: sourceBuffer)
+        let image = compositedImage(for: CIImage(cvPixelBuffer: sourceBuffer), width: width, height: height)
         ciContext.render(
             image,
             to: outputBuffer,
@@ -346,6 +372,62 @@ public class SampleHandler: RPBroadcastSampleHandler {
             colorSpace: CGColorSpaceCreateDeviceRGB()
         )
         return outputBuffer
+    }
+
+    /// Loads the host app's latest transparent PNG only when its shared
+    /// timestamp changes. This keeps disk access out of the hot frame loop.
+    private func currentDrawingOverlay() -> CIImage? {
+        guard let defaults = UserDefaults(suiteName: groupID),
+              defaults.bool(forKey: "screenDrawing.hostAppInBackground"),
+              defaults.bool(forKey: "screenDrawing.overlayAvailable"),
+              let containerURL = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: groupID
+              ) else {
+            return nil
+        }
+
+        let timestamp = defaults.double(forKey: "screenDrawing.overlayTimestamp")
+        overlayCacheLock.lock()
+        if cachedOverlayTimestamp == timestamp, let cachedOverlayImage {
+            overlayCacheLock.unlock()
+            return cachedOverlayImage
+        }
+        overlayCacheLock.unlock()
+
+        let fileURL = containerURL
+            .appendingPathComponent("ScreenDrawing", isDirectory: true)
+            .appendingPathComponent("drawing-overlay.png")
+        guard let data = try? Data(contentsOf: fileURL),
+              let image = CIImage(data: data) else {
+            return nil
+        }
+
+        overlayCacheLock.lock()
+        cachedOverlayImage = image
+        cachedOverlayTimestamp = timestamp
+        overlayCacheLock.unlock()
+        return image
+    }
+
+    /// Returns the captured frame with the transparent drawing scaled to the
+    /// complete video frame and source-over composited on top.
+    private func compositedImage(for image: CIImage, width: Int, height: Int) -> CIImage {
+        guard let overlay = currentDrawingOverlay() else { return image }
+        let extent = overlay.extent
+        guard extent.width > 0, extent.height > 0 else { return image }
+
+        let normalized = overlay.transformed(
+            by: CGAffineTransform(translationX: -extent.minX, y: -extent.minY)
+        ).transformed(
+            by: CGAffineTransform(
+                scaleX: CGFloat(width) / extent.width,
+                y: CGFloat(height) / extent.height
+            )
+        )
+        let filter = CIFilter(name: "CISourceOverCompositing")
+        filter?.setValue(normalized, forKey: kCIInputImageKey)
+        filter?.setValue(image, forKey: kCIInputBackgroundImageKey)
+        return filter?.outputImage?.cropped(to: CGRect(x: 0, y: 0, width: width, height: height)) ?? image
     }
     
     private func encryptAndStreamFrame(_ sampleBuffer: CMSampleBuffer) {
@@ -355,6 +437,12 @@ public class SampleHandler: RPBroadcastSampleHandler {
         frameCounter += 1
         
         // 2. Convert to JPEG for encryption payload using shared ciContext
+        let width = CVPixelBufferGetWidth(imageBuffer)
+        let height = CVPixelBufferGetHeight(imageBuffer)
+        // The App Group drawing is burned into the MP4 pixel-buffer path in
+        // makeBGRAOutputBuffer(). Keep the encrypted ledger path on the
+        // original sample to avoid doing a second full-frame composite per
+        // video frame while the extension is under ReplayKit's memory limit.
         let ciImage = CIImage(cvImageBuffer: imageBuffer)
         let colorSpace = ciImage.colorSpace ?? CGColorSpaceCreateDeviceRGB()
         
@@ -400,8 +488,6 @@ public class SampleHandler: RPBroadcastSampleHandler {
         // Persist the authenticated frame payload and thumbnail for the
         // post-session encrypted gallery. The UI ledger remains lightweight.
         if let key = symmetricKey {
-            let width = CVPixelBufferGetWidth(imageBuffer)
-            let height = CVPixelBufferGetHeight(imageBuffer)
             let scale: CGFloat = 360.0 / CGFloat(width)
             let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
             var thumbnailData: Data?

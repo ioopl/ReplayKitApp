@@ -1,7 +1,10 @@
 # Live Screen Drawing (Telestrator) in System-Wide Broadcast Recording
 
-Enable real-time drawing and telestration on the screen during a System-Wide Screen Broadcast, allowing users to annotate, sketch diagrams, highlight UI, and draw notes while the broadcast recording captures every stroke live into the MP4 recording.
+Note: A telestrator is an electronic device or software tool that lets an operator draw freehand sketches or shapes directly over a moving or still video image. [source] (https://en.wikipedia.org/wiki/Telestrator)
 
+## Enable real-time drawing and telestration on the screen during a System-Wide Screen Broadcast, allowing users to annotate, sketch diagrams, highlight UI, and draw notes while the broadcast recording captures every stroke live into the MP4 recording.
+
+## Limitations : Note the drawing toolbar cannot appear over Outlook, Photos, or other apps on iOS. Only the system-owned app is interactive; ReplayKitApp is no longer on the display. However the compositing gate is added so the overlay activates during both .inactive and .background transitions, which is when iOS switches away from ReplayKitApp.
 ---
 
 ## 1. iOS Screen Capture Architecture
@@ -58,49 +61,6 @@ Enable real-time drawing and telestration on the screen during a System-Wide Scr
                      │    artifact in Session Artifacts  │
                      └───────────────────────────────────┘
 ```
-
-### Dependency Injection Pattern
-
-The drawing architecture adheres to the established MVVM DI pattern:
-
-```swift
-public protocol DrawingServiceProtocol: AnyObject {
-    var isDrawingActive: Bool { get set }
-    var activeTool: DrawingToolType { get set }
-    var strokeColor: DrawingColor { get set }
-    var strokeWidth: CGFloat { get set }
-    var backgroundMode: DrawingBackgroundMode { get set }
-    var canUndo: Bool { get }
-    var canRedo: Bool { get }
-    var hasStrokes: Bool { get }
-    var lastSnapshot: UIImage? { get set }
-    
-    func undo()
-    func redo()
-    func clear()
-    func captureSnapshot(size: CGSize) -> UIImage?
-    func registerCanvas(_ canvas: PKCanvasView)
-}
-```
-
-In `SystemWideScreenBroadcastViewModel`:
-
-```swift
-@MainActor
-public init(
-    keychainService: KeychainServiceProtocol = SharedKeychainManager.shared,
-    photosLibraryService: PhotosLibraryServiceProtocol? = nil,
-    drawingService: DrawingServiceProtocol? = nil
-) {
-    self.keychainService = keychainService
-    self.photosLibraryService = photosLibraryService ?? PhotosLibraryService.shared
-    self.drawingService = drawingService ?? DrawingCanvasManager.shared
-    clearStaleBroadcastState()
-    startMonitoringBroadcast()
-}
-```
-
-For automated testing, `MockDrawingService` is injected, isolating business logic and frame compositing without requiring UIKit/PencilKit window hierarchies.
 
 ---
 

@@ -89,6 +89,15 @@ public protocol DrawingServiceProtocol: AnyObject {
 @MainActor
 public class DrawingCanvasManager: ObservableObject, DrawingServiceProtocol {
     public static let shared = DrawingCanvasManager()
+
+    // These values are intentionally stable because the host app and the
+    // Broadcast Upload Extension are separate targets/processes.
+    public static let appGroupID = "group.com.apkia.replaykitapp.shared"
+    public static let overlayDirectoryName = "ScreenDrawing"
+    public static let overlayFileName = "drawing-overlay.png"
+    public static let overlayAvailableKey = "screenDrawing.overlayAvailable"
+    public static let overlayTimestampKey = "screenDrawing.overlayTimestamp"
+    public static let hostAppInBackgroundKey = "screenDrawing.hostAppInBackground"
     
     @Published public var isDrawingActive: Bool = false
     @Published public var activeTool: DrawingToolType = .pen {
@@ -156,6 +165,7 @@ public class DrawingCanvasManager: ObservableObject, DrawingServiceProtocol {
         canvasView?.drawing = PKDrawing()
         updateUndoRedoState()
         lastSnapshot = nil
+        syncSnapshotToAppGroup(nil)
     }
     
     public func captureSnapshot(size: CGSize = CGSize(width: 640, height: 480)) -> UIImage? {
@@ -173,6 +183,48 @@ public class DrawingCanvasManager: ObservableObject, DrawingServiceProtocol {
         let scale = UIScreen.main.scale
         let image = canvas.drawing.image(from: bounds, scale: scale)
         self.lastSnapshot = image
+        syncSnapshotToAppGroup(image)
         return image
+    }
+
+    /// Publishes the current transparent drawing to the App Group. The PNG is
+    /// replaced atomically so the extension never reads a partially-written
+    /// image while it is processing a video frame.
+    public func syncSnapshotToAppGroup(_ snapshot: UIImage?) {
+        guard let defaults = UserDefaults(suiteName: Self.appGroupID),
+              let containerURL = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: Self.appGroupID
+              ) else { return }
+
+        let directoryURL = containerURL.appendingPathComponent(Self.overlayDirectoryName, isDirectory: true)
+        let fileURL = directoryURL.appendingPathComponent(Self.overlayFileName)
+
+        guard let snapshot, let pngData = snapshot.pngData() else {
+            try? FileManager.default.removeItem(at: fileURL)
+            defaults.set(false, forKey: Self.overlayAvailableKey)
+            defaults.removeObject(forKey: Self.overlayTimestampKey)
+            defaults.synchronize()
+            return
+        }
+
+        do {
+            try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+            try pngData.write(to: fileURL, options: [.atomic])
+            defaults.set(true, forKey: Self.overlayAvailableKey)
+            defaults.set(Date().timeIntervalSince1970, forKey: Self.overlayTimestampKey)
+            defaults.synchronize()
+        } catch {
+            print("Drawing overlay App Group sync failed: \(error)")
+        }
+    }
+
+    /// Called from scenePhase changes. The extension uses this to know whether
+    /// the drawing is already present in the live display compositor.
+    public func updateHostAppBackgroundState(_ isBackground: Bool) {
+        UserDefaults(suiteName: Self.appGroupID)?.set(
+            isBackground,
+            forKey: Self.hostAppInBackgroundKey
+        )
+        UserDefaults(suiteName: Self.appGroupID)?.synchronize()
     }
 }

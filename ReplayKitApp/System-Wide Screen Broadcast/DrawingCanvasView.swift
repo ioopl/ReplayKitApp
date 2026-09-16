@@ -264,6 +264,7 @@ public struct DrawingToolbarView: View {
 // MARK: - Drawing Canvas Container View
 
 public struct DrawingCanvasContainerView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @ObservedObject var manager: DrawingCanvasManager
     @Binding var isDrawingMode: Bool
     var isBroadcasting: Bool
@@ -335,6 +336,12 @@ public struct DrawingCanvasContainerView: View {
                 .padding(.horizontal, 12)
                 .padding(.bottom, 8)
             }
+        }
+        .onAppear {
+            manager.updateHostAppBackgroundState(false)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            manager.updateHostAppBackgroundState(phase != .active)
         }
     }
 }
