@@ -58,7 +58,22 @@ public struct SavedSessionsView: View {
                 }
             }
         }
-        .navigationTitle("Saved Sessions")
+        //.navigationTitle("Saved Sessions")
+        
+        .navigationBarTitleDisplayMode(.inline)
+           .toolbar {
+               ToolbarItem(placement: .principal) {
+                   Text("My Sessions")
+                       .font(.system(size: 34, weight: .bold, design: .rounded))
+                       .foregroundStyle(
+                           LinearGradient(
+                               colors: [.blue, .purple, .pink],
+                               startPoint: .topLeading,
+                               endPoint: .bottomTrailing
+                           )
+                       )
+               }
+           }
         .overlay {
             if documents.isEmpty {
                 ContentUnavailableView("No saved sessions", systemImage: "externaldrive", description: Text("Completed recordings will appear here."))

@@ -144,10 +144,10 @@ struct MenuCard: View {
                     .font(.headline)
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.leading)
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.leading)
+//                Text(subtitle)
+//                    .font(.caption)
+//                    .foregroundColor(.secondary)
+//                    .multilineTextAlignment(.leading)
             }
             
             Spacer()
@@ -163,6 +163,15 @@ struct MenuCard: View {
     }
 }
 
-#Preview {
+#Preview("Main View") {
     ContentView()
+}
+
+#Preview("MenuCard") {
+    MenuCard(
+        title: "A) In-App Screen Recording (as .MP4)",
+        subtitle: "Record screen and present default video editor preview. Produce a local, fully finished MP4 video file.",
+        icon: "record.circle",
+        color: .red
+    )
 }
