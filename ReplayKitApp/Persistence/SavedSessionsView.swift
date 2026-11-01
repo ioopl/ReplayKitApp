@@ -64,7 +64,7 @@ public struct SavedSessionsView: View {
            .toolbar {
                ToolbarItem(placement: .principal) {
                    Text("My Sessions")
-                       .font(.system(size: 34, weight: .bold, design: .rounded))
+                       .font(.system(size: 33, weight: .bold, design: .rounded))
                        .foregroundStyle(
                            LinearGradient(
                                colors: [.blue, .purple, .pink],

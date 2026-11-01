@@ -21,7 +21,8 @@ struct ContentView: View {
             }
 
             NavigationStack {
-                captureMenu
+                SystemWideScreenBroadcastView()
+                //captureMenu
             }
             .tabItem {
                 Label("Capture", systemImage: "record.circle")
@@ -37,7 +38,7 @@ struct ContentView: View {
                 VStack(spacing: 24) {
                     // Header Section
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Secure ReplayKit App: Broadcast Client")
+                        Text("Replay App: Record Safely")
                             .font(.system(size: 34, weight: .bold, design: .rounded))
                             .foregroundStyle(
                                 LinearGradient(
@@ -57,7 +58,7 @@ struct ContentView: View {
                             .font(.headline)
                             .foregroundColor(.blue)
                         
-                        Text("Demonstrates Secure Enclave key isolation, CryptoKit AES-GCM real-time frame encryption, and strict 50MB extension memory optimization.")
+                        Text("This app uses Apple's Secure Enclave key isolation, CryptoKit AES-GCM real-time frame encryption so you can Record Safely without any risk of data exposure.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .lineLimit(nil)

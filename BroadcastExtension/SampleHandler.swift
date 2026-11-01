@@ -436,14 +436,20 @@ public class SampleHandler: RPBroadcastSampleHandler {
         
         frameCounter += 1
         
-        // 2. Convert to JPEG for encryption payload using shared ciContext
-        let width = CVPixelBufferGetWidth(imageBuffer)
-        let height = CVPixelBufferGetHeight(imageBuffer)
-        // The App Group drawing is burned into the MP4 pixel-buffer path in
-        // makeBGRAOutputBuffer(). Keep the encrypted ledger path on the
-        // original sample to avoid doing a second full-frame composite per
-        // video frame while the extension is under ReplayKit's memory limit.
-        let ciImage = CIImage(cvImageBuffer: imageBuffer)
+        // 2. Create one rendered buffer when the overlay is active and reuse
+        // that same pixels for JPEG, thumbnails, and pixel-buffer hashing.
+        // This keeps the MP4 and encrypted frame artifacts consistent.
+        let frameBuffer: CVPixelBuffer
+        if currentDrawingOverlay() != nil,
+           let compositedBuffer = makeBGRAOutputBuffer(from: imageBuffer) {
+            frameBuffer = compositedBuffer
+        } else {
+            frameBuffer = imageBuffer
+        }
+
+        let width = CVPixelBufferGetWidth(frameBuffer)
+        let height = CVPixelBufferGetHeight(frameBuffer)
+        let ciImage = CIImage(cvPixelBuffer: frameBuffer)
         let colorSpace = ciImage.colorSpace ?? CGColorSpaceCreateDeviceRGB()
         
         guard let jpegData = self.ciContext.jpegRepresentation(
@@ -461,10 +467,10 @@ public class SampleHandler: RPBroadcastSampleHandler {
             frameHash = digest.compactMap { String(format: "%02x", $0) }.joined()
         } else {
             // Pipeline 1 (default): hash raw pixel buffer bytes
-            CVPixelBufferLockBaseAddress(imageBuffer, .readOnly)
-            defer { CVPixelBufferUnlockBaseAddress(imageBuffer, .readOnly) }
-            if let base = CVPixelBufferGetBaseAddress(imageBuffer) {
-                let bytes = CVPixelBufferGetBytesPerRow(imageBuffer) * CVPixelBufferGetHeight(imageBuffer)
+            CVPixelBufferLockBaseAddress(frameBuffer, .readOnly)
+            defer { CVPixelBufferUnlockBaseAddress(frameBuffer, .readOnly) }
+            if let base = CVPixelBufferGetBaseAddress(frameBuffer) {
+                let bytes = CVPixelBufferGetBytesPerRow(frameBuffer) * CVPixelBufferGetHeight(frameBuffer)
                 let ptr = UnsafeRawBufferPointer(start: base, count: bytes)
                 let digest = SHA256.hash(data: ptr)
                 frameHash = digest.compactMap { String(format: "%02x", $0) }.joined()

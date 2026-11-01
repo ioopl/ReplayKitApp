@@ -7,6 +7,7 @@ public struct SystemWideScreenBroadcastView: View {
     @State private var selectedRecord: FrameRecord? = nil
     @State private var showSettings = false
     @State private var isDrawingMode = true
+    @State private var isBrowseDrawActive = false
 
     public init() {}
 
@@ -14,68 +15,68 @@ public struct SystemWideScreenBroadcastView: View {
         ZStack {
             ScrollView {
                 VStack(spacing: 24) {
-            ScrollView {
-                Text("Launch the system broadcast picker to record and stream using the Broadcast Upload Extension. This option captures the entire iOS screen (Home screen, other apps, notifications). It spawns a separate system process (the Broadcast Upload Extension).")
-                    .font(.body)
-                    .multilineTextAlignment(.leading)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal)
-            }
-            
-            ScrollView {
-                Text("Note: Auth Status refers to verifying that the main app (or user session) is authenticated with our server backend or local security layer before initiating the stream. \n\nBecause the Broadcast Extension runs as a separate binary target: \n\nThe main app authenticates the user (e.g., getting a JWT token or stream key). \n\nIt saves this key/token into NSUserDefaults (with App Groups) or Keychain (Shared Access Group). \n\nThe Broadcast Extension reads the token from the shared storage to authorize the streaming session with our server/CDN.")
-                    .font(.footnote)
-                    .multilineTextAlignment(.leading)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal)
-            }
-            
-            ScrollView {
-                Text("Network Payload: Typically encoded and streamed to a streaming server (WebRTC/gRPC) in real time.")
-                    .font(.footnote)
-                    .multilineTextAlignment(.leading)
-                    .foregroundColor(.green)
-                    .padding(.horizontal)
-            }
+//            ScrollView {
+//                Text("Launch the system broadcast picker to record and stream using the Broadcast Upload Extension. This option captures the entire iOS screen (Home screen, other apps, notifications). It spawns a separate system process (the Broadcast Upload Extension).")
+//                    .font(.body)
+//                    .multilineTextAlignment(.leading)
+//                    .foregroundColor(.secondary)
+//                    .padding(.horizontal)
+//            }
+//            
+//            ScrollView {
+//                Text("Note: Auth Status refers to verifying that the main app (or user session) is authenticated with our server backend or local security layer before initiating the stream. \n\nBecause the Broadcast Extension runs as a separate binary target: \n\nThe main app authenticates the user (e.g., getting a JWT token or stream key). \n\nIt saves this key/token into NSUserDefaults (with App Groups) or Keychain (Shared Access Group). \n\nThe Broadcast Extension reads the token from the shared storage to authorize the streaming session with our server/CDN.")
+//                    .font(.footnote)
+//                    .multilineTextAlignment(.leading)
+//                    .foregroundColor(.secondary)
+//                    .padding(.horizontal)
+//            }
+//            
+//            ScrollView {
+//                Text("Network Payload: Typically encoded and streamed to a streaming server (WebRTC/gRPC) in real time.")
+//                    .font(.footnote)
+//                    .multilineTextAlignment(.leading)
+//                    .foregroundColor(.green)
+//                    .padding(.horizontal)
+//            }
             
             Spacer()
             
-            // Status Block
-            VStack(spacing: 12) {
-                HStack {
-                    Text("Auth Status:")
-                        .bold()
-                    Spacer()
-                    Text(viewModel.isAuthenticated ? "Authenticated" : "Unauthenticated")
-                        .foregroundColor(viewModel.isAuthenticated ? .green : .orange)
-                        .bold()
-                }
-                .padding()
-                .background(Color.secondary.opacity(0.1))
-                .cornerRadius(8)
-                
-                HStack {
-                    Text("Security Status:")
-                        .bold()
-                    Spacer()
-                    Text(viewModel.keyStatus)
-                        .foregroundColor(viewModel.isAuthenticated ? .blue : .gray)
-                        .bold()
-                }
-                .padding()
-                .background(Color.secondary.opacity(0.1))
-                .cornerRadius(8)
-                
-                // Broadcast Integrity Ledger (live, populated every 10 frames from App Group).
-                // Keep the ledger visible before authentication so users can see where the
-                // broadcast integrity records will appear once the extension starts writing them.
-                FrameIntegrityLedgerView(
-                    records: viewModel.records,
-                    pipelineLabel: settings.hashingPipeline == .pixelBuffer ? "Pipeline 1" : "Pipeline 2 (JPEG-First)",
-                    selectedRecord: $selectedRecord
-                )
-            }
-            .padding(.horizontal)
+//            // Status Block
+//            VStack(spacing: 12) {
+//                HStack {
+//                    Text("Auth Status:")
+//                        .bold()
+//                    Spacer()
+//                    Text(viewModel.isAuthenticated ? "Authenticated" : "Unauthenticated")
+//                        .foregroundColor(viewModel.isAuthenticated ? .green : .orange)
+//                        .bold()
+//                }
+//                .padding()
+//                .background(Color.secondary.opacity(0.1))
+//                .cornerRadius(8)
+//                
+//                HStack {
+//                    Text("Security Status:")
+//                        .bold()
+//                    Spacer()
+//                    Text(viewModel.keyStatus)
+//                        .foregroundColor(viewModel.isAuthenticated ? .blue : .gray)
+//                        .bold()
+//                }
+//                .padding()
+//                .background(Color.secondary.opacity(0.1))
+//                .cornerRadius(8)
+//                
+//                // Broadcast Integrity Ledger (live, populated every 10 frames from App Group).
+//                // Keep the ledger visible before authentication so users can see where the
+//                // broadcast integrity records will appear once the extension starts writing them.
+//                FrameIntegrityLedgerView(
+//                    records: viewModel.records,
+//                    pipelineLabel: settings.hashingPipeline == .pixelBuffer ? "Pipeline 1" : "Pipeline 2 (JPEG-First)",
+//                    selectedRecord: $selectedRecord
+//                )
+//            }
+//            .padding(.horizontal)
             
             if let error = viewModel.errorMessage {
                 Text(error)
@@ -99,7 +100,7 @@ public struct SystemWideScreenBroadcastView: View {
                         .font(.title2)
                         .foregroundColor(.purple)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Live Screen Telestrator")
+                        Text("Live Screen Drawing")
                             .font(.headline)
                         Text("Draw notes, circle items, or sketch on screen while broadcasting.")
                             .font(.caption)
@@ -109,6 +110,25 @@ public struct SystemWideScreenBroadcastView: View {
                     Toggle("", isOn: $viewModel.isDrawingActive)
                         .labelsHidden()
                 }
+                Button {
+                    isBrowseDrawActive = true
+                    viewModel.isDrawingActive = true
+                } label: {
+                    Label("Browse and Draw in Web", systemImage: "safari")
+                        .font(.subheadline.bold())
+                        .frame(maxWidth: .infinity)
+                }
+                //.buttonStyle(.borderedProminent)
+                //Text("External apps cannot display this toolbar. Use Browse & Draw here, or use iPad multitasking to keep this app visible beside another app.")
+                    .font(.caption)
+                    //.foregroundColor(.secondary)
+                    //.font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.green)
+                    .cornerRadius(12)
+                    .padding(.horizontal)
             }
             .padding()
             .background(Color.purple.opacity(0.08))
@@ -125,7 +145,7 @@ public struct SystemWideScreenBroadcastView: View {
                 Button(action: {
                     viewModel.authenticateAndPrepareKeys()
                 }) {
-                    Text("Authenticate & Setup Keys")
+                    Text("Authenticate and Setup")
                         .font(.headline)
                         .foregroundColor(.white)
                         .padding()
@@ -155,7 +175,7 @@ public struct SystemWideScreenBroadcastView: View {
                             .padding(.horizontal)
                     }
 #else
-                    Text("Tap below to launch System Broadcast Picker:")
+                    Text("Tap below to Screen record")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
@@ -167,7 +187,7 @@ public struct SystemWideScreenBroadcastView: View {
                         viewModel.syncPipelineToAppGroup()
                         viewModel.showSummary = true
                     }) {
-                        Label("Post-Broadcast Summary", systemImage: "sparkles")
+                        Label("Post-Recording Summary", systemImage: "sparkles")
                             .font(.subheadline)
                             .foregroundColor(viewModel.lastVideoURL != nil ? .purple : .gray)
                             .padding()
@@ -189,21 +209,48 @@ public struct SystemWideScreenBroadcastView: View {
         
         // Live Screen Drawing Overlay (PencilKit + Floating Telestrator Bar)
         if viewModel.isDrawingActive {
-            DrawingCanvasContainerView(
-                manager: (viewModel.drawingService as? DrawingCanvasManager) ?? DrawingCanvasManager.shared,
-                isDrawingMode: $isDrawingMode,
-                isBroadcasting: viewModel.isBroadcasting
-            )
+            Group {
+                if isBrowseDrawActive {
+                    BrowseAndDrawView(
+                        manager: (viewModel.drawingService as? DrawingCanvasManager) ?? DrawingCanvasManager.shared,
+                        isDrawingMode: $isDrawingMode,
+                        isBroadcasting: viewModel.isBroadcasting
+                    )
+                } else {
+                    DrawingCanvasContainerView(
+                        manager: (viewModel.drawingService as? DrawingCanvasManager) ?? DrawingCanvasManager.shared,
+                        isDrawingMode: $isDrawingMode,
+                        isBroadcasting: viewModel.isBroadcasting
+                    )
+                }
+            }
             .transition(.opacity)
         }
         }
-        .navigationTitle("System-Wide Screen Broadcast")
+        //.navigationTitle("System-Wide Screen Broadcast")
+        .navigationBarTitleDisplayMode(.inline)
+              .toolbar {
+                  ToolbarItem(placement: .principal) {
+                      Text("Screen Record")
+                          .font(.system(size: 33, weight: .bold, design: .rounded))
+                          .foregroundStyle(
+                              LinearGradient(
+                                  colors: [.blue, .purple, .pink],
+                                  startPoint: .topLeading,
+                                  endPoint: .bottomTrailing
+                              )
+                          )
+                  }
+              }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
                     withAnimation {
                         viewModel.isDrawingActive.toggle()
+                        if !viewModel.isDrawingActive {
+                            isBrowseDrawActive = false
+                        }
                     }
                 }) {
                     Image(systemName: viewModel.isDrawingActive ? "scribble.variable" : "scribble")
@@ -273,6 +320,7 @@ struct BroadcastPickerRepresentable: UIViewRepresentable {
         // This must match the BroadcastExtension target's PRODUCT_BUNDLE_IDENTIFIER
         // Set this to actual Broadcast Extension bundle ID
         picker.preferredExtension = "com.apkia.replaykitapp.BroadcastExtension"
+        picker.largeContentImage = UIImage(systemName: "play.fill")
         return picker
     }
     
