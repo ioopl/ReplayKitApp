@@ -5,6 +5,12 @@ import ReplayKit
 import AVFoundation
 import UIKit
 
+// MARK: - App Notifications
+extension Notification.Name {
+    public static let appUserDidLogout = Notification.Name("appUserDidLogout")
+    public static let appDataDidDelete = Notification.Name("appDataDidDelete")
+}
+
 @MainActor
 public class SystemWideScreenBroadcastViewModel: ObservableObject {
     @Published public var isAuthenticated = false
@@ -70,6 +76,34 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
                 }
                 .store(in: &cancellables)
         }
+        
+        NotificationCenter.default.publisher(for: .appUserDidLogout)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                self.isAuthenticated = false
+                self.keyStatus = "Keys Not Prepared"
+                self.isDrawingActive = false
+                self.deleteLocalBuffer()
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: .appDataDidDelete)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                self.records.removeAll()
+                self.lastVideoURL = nil
+                self.lastSessionSize = 0
+                self.lastSessionID = nil
+                self.lastDrawingSnapshot = nil
+                self.photosSaveMessage = nil
+                self.isAuthenticated = false
+                self.keyStatus = "Keys Not Prepared"
+                self.isDrawingActive = false
+                self.deleteLocalBuffer()
+            }
+            .store(in: &cancellables)
         
         clearStaleBroadcastState()
         startMonitoringBroadcast()

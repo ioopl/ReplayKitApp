@@ -171,6 +171,19 @@ public final class EncryptedFrameStore {
         }
     }
 
+    public func deleteAllData() throws {
+        lock.lock()
+        defer { lock.unlock() }
+        let container = try sharedContainerURL()
+        let directories = ["EncryptedFrames", "BroadcastOutput", "ScreenDrawing"]
+        for dir in directories {
+            let url = container.appendingPathComponent(dir, isDirectory: true)
+            if fileManager.fileExists(atPath: url.path) {
+                try? fileManager.removeItem(at: url)
+            }
+        }
+    }
+
     private func seal(_ data: Data, using key: SymmetricKey) throws -> Data {
         try AES.GCM.seal(data, using: key).combined ?? Data()
     }
