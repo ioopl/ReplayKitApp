@@ -73,6 +73,7 @@ final class ReplayKitAppTests: XCTestCase {
         
         XCTAssertFalse(viewModel.isDrawingActive)
         XCTAssertNil(viewModel.lastDrawingSnapshot)
+        XCTAssertFalse(viewModel.hasRecording)
         
         // Toggle drawing
         viewModel.isDrawingActive = true
@@ -84,10 +85,12 @@ final class ReplayKitAppTests: XCTestCase {
         XCTAssertTrue(mockDrawing.snapshotCaptured)
         XCTAssertNotNil(viewModel.lastDrawingSnapshot)
         XCTAssertTrue(viewModel.showMockSummary)
+        XCTAssertTrue(viewModel.hasRecording)
         
         // Deleting local buffer should clear drawing snapshot and call drawingService.clear()
         viewModel.deleteLocalBuffer()
         XCTAssertNil(viewModel.lastDrawingSnapshot)
+        XCTAssertFalse(viewModel.hasRecording)
         XCTAssertTrue(mockDrawing.clearCalled)
     }
     

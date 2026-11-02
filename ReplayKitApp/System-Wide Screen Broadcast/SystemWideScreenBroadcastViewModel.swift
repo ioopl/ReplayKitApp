@@ -25,10 +25,21 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     @Published public var lastSessionID: String?
     
     // Live Screen Drawing Properties
-    @Published public var isDrawingActive: Bool = false
+    @Published public var isDrawingActive: Bool = false {
+        didSet {
+            if drawingService.isDrawingActive != isDrawingActive {
+                drawingService.isDrawingActive = isDrawingActive
+            }
+        }
+    }
     @Published public var lastDrawingSnapshot: UIImage?
     public let drawingService: DrawingServiceProtocol
     
+    public var hasRecording: Bool {
+        lastVideoURL != nil || (lastSessionID != nil && lastSessionSize > 0)
+    }
+    
+    private var cancellables = Set<AnyCancellable>()
     private let keychainService: KeychainServiceProtocol
     private let photosLibraryService: PhotosLibraryServiceProtocol
     private var pollingTimer: Timer?
@@ -46,7 +57,20 @@ public class SystemWideScreenBroadcastViewModel: ObservableObject {
     ) {
         self.keychainService = keychainService
         self.photosLibraryService = photosLibraryService ?? PhotosLibraryService.shared
-        self.drawingService = drawingService ?? DrawingCanvasManager.shared
+        let resolvedDrawingService = drawingService ?? DrawingCanvasManager.shared
+        self.drawingService = resolvedDrawingService
+        self.isDrawingActive = resolvedDrawingService.isDrawingActive
+        
+        if let manager = resolvedDrawingService as? DrawingCanvasManager {
+            manager.$isDrawingActive
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] active in
+                    guard let self = self, self.isDrawingActive != active else { return }
+                    self.isDrawingActive = active
+                }
+                .store(in: &cancellables)
+        }
+        
         clearStaleBroadcastState()
         startMonitoringBroadcast()
     }

@@ -3,6 +3,9 @@ import SwiftUI
 /// Full-screen settings view accessible via the ⚙ toolbar button.
 public struct SettingsView: View {
     @ObservedObject private var settings = CaptureSettings.shared
+    @ObservedObject private var drawingManager = DrawingCanvasManager.shared
+    @State private var showBrowseAndDraw = false
+    @State private var isDrawingMode = true
     @Environment(\.dismiss) private var dismiss
 
     public init() {}
@@ -10,6 +13,20 @@ public struct SettingsView: View {
     public var body: some View {
         NavigationStack {
             List {
+                Section {
+                    LiveScreenDrawingSectionView(
+                        isDrawingActive: $drawingManager.isDrawingActive,
+                        onBrowseAndDraw: {
+                            showBrowseAndDraw = true
+                        },
+                        isCardStyle: false
+                    )
+                } header: {
+                    Text("Live Screen Drawing")
+                } footer: {
+                    Text("Toggle screen drawing tools or launch the in-app web browser with overlay drawing canvas.")
+                }
+
                 Section {
                     VStack(alignment: .leading, spacing: 6) {
                         Label("Frame Integrity Definition", systemImage: "cpu")
@@ -117,6 +134,13 @@ public struct SettingsView: View {
                     Button("Done") { dismiss() }
                         .bold()
                 }
+            }
+            .fullScreenCover(isPresented: $showBrowseAndDraw) {
+                BrowseAndDrawView(
+                    manager: drawingManager,
+                    isDrawingMode: $isDrawingMode,
+                    isBroadcasting: false
+                )
             }
         }
     }

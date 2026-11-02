@@ -6,17 +6,21 @@ import CryptoKit
 // MARK: - Mocks
 
 class MockScreenRecorderService: ScreenRecorderServiceProtocol {
+    
+    // Protocol properties
     var isRecording = false
     var isCapturing = false
     var isClipBuffering = false
-    
-    @Published private var _isRecording = false
-    @Published private var _isCapturing = false
-    @Published private var _isClipBuffering = false
-    
+        
     var isRecordingPublisher: Published<Bool>.Publisher { $_isRecording }
     var isCapturingPublisher: Published<Bool>.Publisher { $_isCapturing }
     var isClipBufferingPublisher: Published<Bool>.Publisher { $_isClipBuffering }
+    
+    // Private properties
+    @Published private var _isRecording = false
+    @Published private var _isCapturing = false
+    @Published private var _isClipBuffering = false
+
     
     var shouldFail = false
     var captureFrameHandler: ((CMSampleBuffer, RPSampleBufferType) -> Void)?

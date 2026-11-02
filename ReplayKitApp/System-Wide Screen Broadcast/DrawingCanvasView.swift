@@ -354,6 +354,7 @@ public struct DrawingCanvasContainerView: View {
 /// controls while recording.
 public struct BrowseAndDrawView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject var manager: DrawingCanvasManager
     @Binding var isDrawingMode: Bool
     var isBroadcasting: Bool
@@ -402,6 +403,11 @@ public struct BrowseAndDrawView: View {
 
                     Button("Go", action: navigate)
                         .buttonStyle(.borderedProminent)
+
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .buttonStyle(.bordered)
                 }
                 .padding(.horizontal, 10)
                 .padding(.top, 8)

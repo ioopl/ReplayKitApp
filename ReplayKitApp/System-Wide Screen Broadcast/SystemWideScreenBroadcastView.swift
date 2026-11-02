@@ -11,255 +11,253 @@ public struct SystemWideScreenBroadcastView: View {
 
     public init() {}
 
+    private var heroTitle: String {
+        if !viewModel.isAuthenticated {
+            return "Authentication Required"
+        } else if viewModel.isBroadcasting {
+            return "Screen Recording Active"
+        } else {
+            return "System-Wide Screen Record"
+        }
+    }
+
+    private var heroSubtitle: String {
+        if !viewModel.isAuthenticated {
+            return "Authenticate with Face ID or device passcode to generate hardware-bound encryption keys before broadcasting."
+        } else if viewModel.isBroadcasting {
+            return "Your entire iOS screen is being captured, encrypted, and streamed in real time."
+        } else {
+            return "Capture your entire iOS screen across all apps and stream or encrypt frames in real time."
+        }
+    }
+
     public var body: some View {
         ZStack {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
-//            ScrollView {
-//                Text("Launch the system broadcast picker to record and stream using the Broadcast Upload Extension. This option captures the entire iOS screen (Home screen, other apps, notifications). It spawns a separate system process (the Broadcast Upload Extension).")
-//                    .font(.body)
-//                    .multilineTextAlignment(.leading)
-//                    .foregroundColor(.secondary)
-//                    .padding(.horizontal)
-//            }
-//            
-//            ScrollView {
-//                Text("Note: Auth Status refers to verifying that the main app (or user session) is authenticated with our server backend or local security layer before initiating the stream. \n\nBecause the Broadcast Extension runs as a separate binary target: \n\nThe main app authenticates the user (e.g., getting a JWT token or stream key). \n\nIt saves this key/token into NSUserDefaults (with App Groups) or Keychain (Shared Access Group). \n\nThe Broadcast Extension reads the token from the shared storage to authorize the streaming session with our server/CDN.")
-//                    .font(.footnote)
-//                    .multilineTextAlignment(.leading)
-//                    .foregroundColor(.secondary)
-//                    .padding(.horizontal)
-//            }
-//            
-//            ScrollView {
-//                Text("Network Payload: Typically encoded and streamed to a streaming server (WebRTC/gRPC) in real time.")
-//                    .font(.footnote)
-//                    .multilineTextAlignment(.leading)
-//                    .foregroundColor(.green)
-//                    .padding(.horizontal)
-//            }
-            
-            Spacer()
-            
-//            // Status Block
-//            VStack(spacing: 12) {
-//                HStack {
-//                    Text("Auth Status:")
-//                        .bold()
-//                    Spacer()
-//                    Text(viewModel.isAuthenticated ? "Authenticated" : "Unauthenticated")
-//                        .foregroundColor(viewModel.isAuthenticated ? .green : .orange)
-//                        .bold()
-//                }
-//                .padding()
-//                .background(Color.secondary.opacity(0.1))
-//                .cornerRadius(8)
-//                
-//                HStack {
-//                    Text("Security Status:")
-//                        .bold()
-//                    Spacer()
-//                    Text(viewModel.keyStatus)
-//                        .foregroundColor(viewModel.isAuthenticated ? .blue : .gray)
-//                        .bold()
-//                }
-//                .padding()
-//                .background(Color.secondary.opacity(0.1))
-//                .cornerRadius(8)
-//                
-//                // Broadcast Integrity Ledger (live, populated every 10 frames from App Group).
-//                // Keep the ledger visible before authentication so users can see where the
-//                // broadcast integrity records will appear once the extension starts writing them.
-//                FrameIntegrityLedgerView(
-//                    records: viewModel.records,
-//                    pipelineLabel: settings.hashingPipeline == .pixelBuffer ? "Pipeline 1" : "Pipeline 2 (JPEG-First)",
-//                    selectedRecord: $selectedRecord
-//                )
-//            }
-//            .padding(.horizontal)
-            
-            if let error = viewModel.errorMessage {
-                Text(error)
-                    .foregroundColor(.red)
-                    .font(.caption)
-                    .padding()
-            }
+                    // MARK: - Center Hero Badge (Apple Continuity style)
+                    VStack(spacing: 16) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 96, height: 96)
+                                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
 
-            if let photosSaveMessage = viewModel.photosSaveMessage {
-                Text(photosSaveMessage)
-                    .foregroundColor(photosSaveMessage == "Broadcast saved to Photos." ? .green : .orange)
-                    .font(.caption)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
-            
-            // Live Screen Telestrator / Drawing Card
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Image(systemName: "scribble")
-                        .font(.title2)
-                        .foregroundColor(.purple)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Live Screen Drawing")
-                            .font(.headline)
-                        Text("Draw notes, circle items, or sketch on screen while broadcasting.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    Spacer()
-                    Toggle("", isOn: $viewModel.isDrawingActive)
-                        .labelsHidden()
-                }
-                Button {
-                    isBrowseDrawActive = true
-                    viewModel.isDrawingActive = true
-                } label: {
-                    Label("Browse and Draw in Web", systemImage: "safari")
-                        .font(.subheadline.bold())
-                        .frame(maxWidth: .infinity)
-                }
-                //.buttonStyle(.borderedProminent)
-                //Text("External apps cannot display this toolbar. Use Browse & Draw here, or use iPad multitasking to keep this app visible beside another app.")
-                    .font(.caption)
-                    //.foregroundColor(.secondary)
-                    //.font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.green)
-                    .cornerRadius(12)
-                    .padding(.horizontal)
-            }
-            .padding()
-            .background(Color.purple.opacity(0.08))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.purple.opacity(0.25), lineWidth: 1)
-            )
-            .padding(.horizontal)
-            
-            Spacer()
-            
-            if !viewModel.isAuthenticated {
-                Button(action: {
-                    viewModel.authenticateAndPrepareKeys()
-                }) {
-                    Text("Authenticate and Setup")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.blue)
-                        .cornerRadius(12)
-                        .padding(.horizontal)
-                }
-                } else {
-                    VStack(spacing: 24) {
-#if targetEnvironment(simulator)
-                    Text("System-wide ReplayKit capture is unavailable in Simulator.")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                        .multilineTextAlignment(.center)
+                            if !viewModel.isAuthenticated {
+                                Image(systemName: "lock.shield.fill")
+                                    .font(.system(size: 42, weight: .regular))
+                                    .foregroundColor(.black)
+                            } else if viewModel.isBroadcasting {
+                                Image(systemName: "record.circle.fill")
+                                    .font(.system(size: 46, weight: .regular))
+                                    .foregroundColor(.red)
+                            } else {
+                                Image(systemName: "record.circle")
+                                    .font(.system(size: 46, weight: .regular))
+                                    .foregroundColor(.black)
+                            }
+                        }
+                        .padding(.top, 16)
 
-                    Button(action: {
-                        viewModel.simulateBroadcastEnded()
-                    }) {
-                        Label("Simulate Broadcast (Simulator)", systemImage: "play.rectangle.fill")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.orange)
-                            .cornerRadius(12)
-                            .padding(.horizontal)
-                    }
-#else
-                    Text("Tap below to Screen record")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    BroadcastPickerRepresentable()
-                        .frame(width: 80, height: 80)
-#endif
-                    
-                    Button(action: {
-                        viewModel.syncPipelineToAppGroup()
-                        viewModel.showSummary = true
-                    }) {
-                        Label("Post-Recording Summary", systemImage: "sparkles")
-                            .font(.subheadline)
-                            .foregroundColor(viewModel.lastVideoURL != nil ? .purple : .gray)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(viewModel.lastVideoURL != nil ? Color.purple.opacity(0.1) : Color.gray.opacity(0.1))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(viewModel.lastVideoURL != nil ? Color.purple.opacity(0.3) : Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-                            .padding(.horizontal)
-                    }
-                    .disabled(viewModel.lastVideoURL == nil)
-                }
-            }
-        }
-        .padding()
-        }
-        
-        // Live Screen Drawing Overlay (PencilKit + Floating Telestrator Bar)
-        if viewModel.isDrawingActive {
-            Group {
-                if isBrowseDrawActive {
-                    BrowseAndDrawView(
-                        manager: (viewModel.drawingService as? DrawingCanvasManager) ?? DrawingCanvasManager.shared,
-                        isDrawingMode: $isDrawingMode,
-                        isBroadcasting: viewModel.isBroadcasting
-                    )
-                } else {
-                    DrawingCanvasContainerView(
-                        manager: (viewModel.drawingService as? DrawingCanvasManager) ?? DrawingCanvasManager.shared,
-                        isDrawingMode: $isDrawingMode,
-                        isBroadcasting: viewModel.isBroadcasting
-                    )
-                }
-            }
-            .transition(.opacity)
-        }
-        }
-        //.navigationTitle("System-Wide Screen Broadcast")
-        .navigationBarTitleDisplayMode(.inline)
-              .toolbar {
-                  ToolbarItem(placement: .principal) {
-                      Text("Screen Record")
-                          .font(.system(size: 33, weight: .bold, design: .rounded))
-                          .foregroundStyle(
-                              LinearGradient(
-                                  colors: [.blue, .purple, .pink],
-                                  startPoint: .topLeading,
-                                  endPoint: .bottomTrailing
-                              )
-                          )
-                  }
-              }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    withAnimation {
-                        viewModel.isDrawingActive.toggle()
-                        if !viewModel.isDrawingActive {
-                            isBrowseDrawActive = false
+                        VStack(spacing: 6) {
+                            Text(heroTitle)
+                                .font(.system(size: 24, weight: .bold, design: .default))
+                                .foregroundColor(.primary)
+                                .multilineTextAlignment(.center)
+
+                            Text(heroSubtitle)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .lineSpacing(3)
+                                .padding(.horizontal, 24)
                         }
                     }
-                }) {
-                    Image(systemName: viewModel.isDrawingActive ? "scribble.variable" : "scribble")
-                        .font(.body)
-                        .foregroundColor(viewModel.isDrawingActive ? .purple : .primary)
+
+                    // MARK: - Status & Error Messages
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+
+                    if let photosSaveMessage = viewModel.photosSaveMessage {
+                        Text(photosSaveMessage)
+                            .foregroundColor(photosSaveMessage == "Broadcast saved to Photos." ? .green : .orange)
+                            .font(.caption)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+
+                    // MARK: - Live Screen Drawing (Only shown when Authenticated)
+                    if viewModel.isAuthenticated {
+                        LiveScreenDrawingSectionView(
+                            isDrawingActive: $viewModel.isDrawingActive,
+                            onBrowseAndDraw: {
+                                isBrowseDrawActive = true
+                                viewModel.isDrawingActive = true
+                            },
+                            isCardStyle: true
+                        )
+                        .padding(.horizontal, 20)
+                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                    }
+
+                    Spacer(minLength: 32)
+
+                    // MARK: - Bottom Action Buttons (Continuity Camera Style)
+                    VStack(spacing: 12) {
+                        // Post-Recording Summary (Only visible when a recording exists)
+                        if viewModel.hasRecording {
+                            Button(action: {
+                                viewModel.syncPipelineToAppGroup()
+                                viewModel.showSummary = true
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "sparkles")
+                                        .font(.headline)
+                                    Text("Post-Recording Summary")
+                                        .font(.headline.weight(.semibold))
+                                }
+                                .foregroundColor(.primary)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 56)
+                                .background(Color(.secondarySystemGroupedBackground))
+                                .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+                                )
+                                .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+                            }
+                            .buttonStyle(.plain)
+                            .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        }
+
+                        // Authenticate or Big Red Record Button
+                        if !viewModel.isAuthenticated {
+                            Button(action: {
+                                viewModel.authenticateAndPrepareKeys()
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "faceid")
+                                        .font(.title3.bold())
+                                    Text("Authenticate and Setup")
+                                        .font(.headline.weight(.semibold))
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 56)
+                                .background(Color.blue)
+                                .cornerRadius(14)
+                                .shadow(color: Color.blue.opacity(0.25), radius: 8, x: 0, y: 4)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal, 4)
+                        } else {
+                            #if targetEnvironment(simulator)
+                            Button(action: {
+                                viewModel.simulateBroadcastEnded()
+                            }) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "record.circle.fill")
+                                        .font(.title3.bold())
+                                    Text("Start Recording (Simulator)")
+                                        .font(.headline.weight(.semibold))
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 56)
+                                .background(Color(red: 1.0, green: 0.27, blue: 0.23))
+                                .cornerRadius(14)
+                                .shadow(color: Color.red.opacity(0.25), radius: 8, x: 0, y: 4)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal, 4)
+                            #else
+                            ZStack {
+                                HStack(spacing: 10) {
+                                    Image(systemName: viewModel.isBroadcasting ? "stop.circle.fill" : "record.circle.fill")
+                                        .font(.title3.bold())
+                                    Text(viewModel.isBroadcasting ? "Stop Screen Recording" : "Start Screen Recording")
+                                        .font(.headline.weight(.semibold))
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 56)
+                                .background(Color(red: 1.0, green: 0.27, blue: 0.23))
+                                .cornerRadius(14)
+                                .shadow(color: Color.red.opacity(0.25), radius: 8, x: 0, y: 4)
+
+                                BroadcastPickerRepresentable()
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .opacity(0.015)
+                            }
+                            .frame(height: 56)
+                            .padding(.horizontal, 4)
+                            #endif
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 20)
                 }
-                .accessibilityLabel(viewModel.isDrawingActive ? "Hide Drawing Canvas" : "Show Drawing Canvas")
             }
-            
+
+            // MARK: - Live Screen Drawing Overlay
+            if viewModel.isDrawingActive {
+                Group {
+                    if isBrowseDrawActive {
+                        BrowseAndDrawView(
+                            manager: (viewModel.drawingService as? DrawingCanvasManager) ?? DrawingCanvasManager.shared,
+                            isDrawingMode: $isDrawingMode,
+                            isBroadcasting: viewModel.isBroadcasting
+                        )
+                    } else {
+                        DrawingCanvasContainerView(
+                            manager: (viewModel.drawingService as? DrawingCanvasManager) ?? DrawingCanvasManager.shared,
+                            isDrawingMode: $isDrawingMode,
+                            isBroadcasting: viewModel.isBroadcasting
+                        )
+                    }
+                }
+                .transition(.opacity)
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Screen Record")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.blue, .purple, .pink],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+
+            // Scribble toolbar icon: Only visible when Authenticated
+            if viewModel.isAuthenticated {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        withAnimation {
+                            viewModel.isDrawingActive.toggle()
+                            if !viewModel.isDrawingActive {
+                                isBrowseDrawActive = false
+                            }
+                        }
+                    }) {
+                        Image(systemName: viewModel.isDrawingActive ? "scribble.variable" : "scribble")
+                            .font(.body)
+                            .foregroundColor(viewModel.isDrawingActive ? .purple : .primary)
+                    }
+                    .accessibilityLabel(viewModel.isDrawingActive ? "Hide Drawing Canvas" : "Show Drawing Canvas")
+                }
+            }
+
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
                     showSettings = true
@@ -304,7 +302,6 @@ public struct SystemWideScreenBroadcastView: View {
             FrameDetailView(record: record)
         }
         .onAppear {
-            // Sync pipeline setting each time this view appears so SampleHandler always has the latest
             viewModel.syncPipelineToAppGroup()
         }
         .onChange(of: settings.hashingPipeline) { _ in
@@ -313,16 +310,25 @@ public struct SystemWideScreenBroadcastView: View {
     }
 }
 
+// MARK: - Native ReplayKit Broadcast Picker Representable
 struct BroadcastPickerRepresentable: UIViewRepresentable {
     func makeUIView(context: Context) -> RPSystemBroadcastPickerView {
-        let picker = RPSystemBroadcastPickerView(frame: CGRect(x: 0, y: 0, width: 80, height: 80))
+        let picker = CustomBroadcastPickerView(frame: .zero)
         picker.showsMicrophoneButton = true
-        // This must match the BroadcastExtension target's PRODUCT_BUNDLE_IDENTIFIER
-        // Set this to actual Broadcast Extension bundle ID
         picker.preferredExtension = "com.apkia.replaykitapp.BroadcastExtension"
-        picker.largeContentImage = UIImage(systemName: "play.fill")
         return picker
     }
-    
+
     func updateUIView(_ uiView: RPSystemBroadcastPickerView, context: Context) {}
+}
+
+final class CustomBroadcastPickerView: RPSystemBroadcastPickerView {
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        for subview in subviews {
+            if let button = subview as? UIButton {
+                button.frame = bounds
+            }
+        }
+    }
 }
