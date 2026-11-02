@@ -8,6 +8,7 @@ public struct SystemWideScreenBroadcastView: View {
     @State private var showSettings = false
     @State private var isDrawingMode = true
     @State private var isBrowseDrawActive = false
+    @State private var showDrawingOptions = false
 
     public init() {}
 
@@ -91,20 +92,6 @@ public struct SystemWideScreenBroadcastView: View {
                             .padding(.horizontal)
                     }
 
-                    // MARK: - Live Screen Drawing (Only shown when Authenticated)
-                    if viewModel.isAuthenticated {
-                        LiveScreenDrawingSectionView(
-                            isDrawingActive: $viewModel.isDrawingActive,
-                            onBrowseAndDraw: {
-                                isBrowseDrawActive = true
-                                viewModel.isDrawingActive = true
-                            },
-                            isCardStyle: true
-                        )
-                        .padding(.horizontal, 20)
-                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
-                    }
-
                     Spacer(minLength: 32)
 
                     // MARK: - Bottom Action Buttons (Continuity Camera Style)
@@ -136,7 +123,7 @@ public struct SystemWideScreenBroadcastView: View {
                             .transition(.opacity.combined(with: .move(edge: .bottom)))
                         }
 
-                        // Authenticate or Big Red Record Button
+                        // Authenticate or Big Red Record Button (ON TOP)
                         if !viewModel.isAuthenticated {
                             Button(action: {
                                 viewModel.authenticateAndPrepareKeys()
@@ -144,7 +131,7 @@ public struct SystemWideScreenBroadcastView: View {
                                 HStack(spacing: 8) {
                                     Image(systemName: "faceid")
                                         .font(.title3.bold())
-                                    Text("Authenticate and Setup")
+                                    Text("Authenticate")
                                         .font(.headline.weight(.semibold))
                                 }
                                 .foregroundColor(.white)
@@ -198,6 +185,55 @@ public struct SystemWideScreenBroadcastView: View {
                             .frame(height: 56)
                             .padding(.horizontal, 4)
                             #endif
+
+                            // Drawing Options Button (BELOW the Record button)
+                            Button(action: {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                    showDrawingOptions.toggle()
+                                }
+                            }) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "paintpalette.fill")
+                                        .font(.headline)
+                                        .foregroundColor(.purple)
+                                    Text(showDrawingOptions ? "Hide Drawing Options" : "Show Drawing Options")
+                                        .font(.headline.weight(.semibold))
+                                        .foregroundColor(.primary)
+                                    Spacer()
+                                    Image(systemName: showDrawingOptions ? "chevron.up" : "chevron.down")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(.horizontal, 16)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 56)
+                                .background(Color(.secondarySystemGroupedBackground))
+                                .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(showDrawingOptions ? Color.purple.opacity(0.3) : Color.primary.opacity(0.12), lineWidth: 1)
+                                )
+                                .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal, 4)
+                            .accessibilityLabel(showDrawingOptions ? "Hide Drawing Options" : "Show Drawing Options")
+                            .accessibilityHint("Toggles display of live screen drawing and web canvas options below.")
+                            .accessibilityAddTraits(.isButton)
+
+                            // Live Screen Drawing Options (Expands smoothly BELOW the button)
+                            if showDrawingOptions {
+                                LiveScreenDrawingSectionView(
+                                    isDrawingActive: $viewModel.isDrawingActive,
+                                    onBrowseAndDraw: {
+                                        isBrowseDrawActive = true
+                                        viewModel.isDrawingActive = true
+                                    },
+                                    isCardStyle: true
+                                )
+                                .padding(.horizontal, 4)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
                         }
                     }
                     .padding(.horizontal, 16)
@@ -229,7 +265,7 @@ public struct SystemWideScreenBroadcastView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("Screen Record")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(.system(size: 33, weight: .bold, design: .rounded))
                     .foregroundStyle(
                         LinearGradient(
                             colors: [.blue, .purple, .pink],
@@ -306,6 +342,11 @@ public struct SystemWideScreenBroadcastView: View {
         }
         .onChange(of: settings.hashingPipeline) { _ in
             viewModel.syncPipelineToAppGroup()
+        }
+        .onChange(of: viewModel.isAuthenticated) { authenticated in
+            if !authenticated {
+                showDrawingOptions = false
+            }
         }
     }
 }
