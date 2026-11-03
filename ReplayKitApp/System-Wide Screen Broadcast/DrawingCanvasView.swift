@@ -59,15 +59,21 @@ public struct PencilCanvasRepresentable: UIViewRepresentable {
 
 public struct DrawingToolbarView: View {
     @ObservedObject var manager: DrawingCanvasManager
+    @ObservedObject var blurManager: BlurLensManager
     @Binding var isDrawingMode: Bool
     @State private var isCollapsed: Bool = false
-    @State private var showSettings: Bool = false
-    
-    public init(manager: DrawingCanvasManager, isDrawingMode: Binding<Bool>) {
+    @State private var showBlurRow: Bool = false
+
+    public init(
+        manager: DrawingCanvasManager,
+        blurManager: BlurLensManager = .shared,
+        isDrawingMode: Binding<Bool>
+    ) {
         self.manager = manager
+        self.blurManager = blurManager
         self._isDrawingMode = isDrawingMode
     }
-    
+
     public var body: some View {
         VStack(spacing: 8) {
             if isCollapsed {
@@ -79,16 +85,17 @@ public struct DrawingToolbarView: View {
         .padding(8)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isCollapsed)
         .animation(.easeInOut(duration: 0.2), value: isDrawingMode)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showBlurRow)
     }
-    
-    // Collapsed floating bubble
+
+    // MARK: Collapsed floating bubble
     private var collapsedButton: some View {
         Button(action: { isCollapsed = false }) {
             HStack(spacing: 6) {
                 Image(systemName: isDrawingMode ? "pencil.tip.crop.circle.fill" : "hand.draw.fill")
                     .font(.title3)
                     .foregroundColor(.white)
-                
+
                 Text(isDrawingMode ? "Draw" : "Touch")
                     .font(.caption.bold())
                     .foregroundColor(.white)
@@ -103,29 +110,33 @@ public struct DrawingToolbarView: View {
         }
         .accessibilityLabel("Expand Drawing Toolbar")
     }
-    
-    // Expanded Toolbar
+
+    // MARK: Expanded Toolbar
     private var expandedToolbar: some View {
         VStack(spacing: 10) {
-            // Row 1: Primary Controls (Mode, Tools, Undo/Redo, Actions)
+            // ── Row 1: Primary Controls ───────────────────────────────────
             HStack(spacing: 8) {
                 // Toggle Draw vs Touch/Interact
-                Button(action: {
-                    isDrawingMode.toggle()
-                }) {
-                    Label(isDrawingMode ? "Drawing" : "Touch", systemImage: isDrawingMode ? "pencil.line" : "hand.tap.fill")
-                        .font(.caption.bold())
-                        .foregroundColor(isDrawingMode ? .white : .primary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(isDrawingMode ? Color.blue : Color(.systemGray5))
-                        .cornerRadius(8)
+                Button(action: { isDrawingMode.toggle() }) {
+                    Label(
+                        isDrawingMode ? "Drawing" : "Touch",
+                        systemImage: isDrawingMode ? "pencil.line" : "hand.tap.fill"
+                    )
+                    .font(.caption.bold())
+                    .foregroundColor(isDrawingMode ? .white : .primary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(isDrawingMode ? Color.blue : Color(.systemGray5))
+                    .cornerRadius(8)
                 }
-                .accessibilityLabel(isDrawingMode ? "Drawing mode active. Tap for touch mode" : "Touch mode active. Tap for drawing mode")
-                
-                Divider()
-                    .frame(height: 24)
-                
+                .accessibilityLabel(
+                    isDrawingMode
+                        ? "Drawing mode active. Tap for touch mode"
+                        : "Touch mode active. Tap for drawing mode"
+                )
+
+                Divider().frame(height: 24)
+
                 // Tool Pickers (Pen, Highlighter, Pencil, Eraser)
                 ForEach(DrawingToolType.allCases) { tool in
                     Button(action: {
@@ -141,10 +152,9 @@ public struct DrawingToolbarView: View {
                     }
                     .accessibilityLabel("\(tool.rawValue) tool")
                 }
-                
-                Divider()
-                    .frame(height: 24)
-                
+
+                Divider().frame(height: 24)
+
                 // Undo / Redo
                 Button(action: { manager.undo() }) {
                     Image(systemName: "arrow.uturn.backward")
@@ -153,7 +163,7 @@ public struct DrawingToolbarView: View {
                 }
                 .disabled(!manager.canUndo)
                 .accessibilityLabel("Undo")
-                
+
                 Button(action: { manager.redo() }) {
                     Image(systemName: "arrow.uturn.forward")
                         .font(.system(size: 14, weight: .medium))
@@ -161,7 +171,7 @@ public struct DrawingToolbarView: View {
                 }
                 .disabled(!manager.canRedo)
                 .accessibilityLabel("Redo")
-                
+
                 // Clear Canvas
                 Button(action: { manager.clear() }) {
                     Image(systemName: "trash")
@@ -170,10 +180,24 @@ public struct DrawingToolbarView: View {
                 }
                 .disabled(!manager.hasStrokes)
                 .accessibilityLabel("Clear canvas")
-                
+
                 Spacer(minLength: 0)
-                
-                // Collapse button
+
+                // ── Blur toggle ──────────────────────────────────────────
+                Button(action: {
+                    withAnimation { showBlurRow.toggle() }
+                    if !showBlurRow { blurManager.deactivateBlurMode() }
+                }) {
+                    Image(systemName: "aqi.medium")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(showBlurRow ? Color.cyan : Color.secondary)
+                        .frame(width: 30, height: 30)
+                        .background(showBlurRow ? Color.cyan.opacity(0.15) : Color.clear)
+                        .clipShape(Circle())
+                }
+                .accessibilityLabel("Toggle blur lenses panel")
+
+                // Collapse
                 Button(action: { isCollapsed = true }) {
                     Image(systemName: "chevron.down.circle.fill")
                         .font(.system(size: 18))
@@ -181,16 +205,14 @@ public struct DrawingToolbarView: View {
                 }
                 .accessibilityLabel("Minimize toolbar")
             }
-            
-            // Row 2: Color Palette, Stroke Width, and Background Mode
+
+            // ── Row 2: Color Palette, Stroke Width, Background Mode ───────
             HStack(spacing: 8) {
                 // Color Swatches
                 ForEach(DrawingColor.allCases) { color in
                     Button(action: {
                         manager.strokeColor = color
-                        if manager.activeTool == .eraser {
-                            manager.activeTool = .pen
-                        }
+                        if manager.activeTool == .eraser { manager.activeTool = .pen }
                     }) {
                         Circle()
                             .fill(color.swiftUIColor)
@@ -203,19 +225,18 @@ public struct DrawingToolbarView: View {
                     }
                     .accessibilityLabel("\(color.rawValue) color")
                 }
-                
-                Divider()
-                    .frame(height: 20)
-                
-                // Stroke Width options (Thin, Medium, Thick)
+
+                Divider().frame(height: 20)
+
+                // Stroke Width options
                 HStack(spacing: 4) {
                     strokeWidthButton(width: 2.5, iconSize: 4)
                     strokeWidthButton(width: 5.0, iconSize: 7)
                     strokeWidthButton(width: 10.0, iconSize: 11)
                 }
-                
+
                 Spacer(minLength: 0)
-                
+
                 // Background Mode Picker
                 Menu {
                     ForEach(DrawingBackgroundMode.allCases) { mode in
@@ -237,6 +258,14 @@ public struct DrawingToolbarView: View {
                 }
                 .accessibilityLabel("Canvas background mode")
             }
+
+            // ── Row 3: Blur Lens Presets (shown when showBlurRow == true) ─
+            if showBlurRow {
+                Divider()
+
+                BlurToolbarSection(blurManager: blurManager)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -246,11 +275,9 @@ public struct DrawingToolbarView: View {
                 .shadow(color: .black.opacity(0.18), radius: 10, x: 0, y: 5)
         )
     }
-    
+
     private func strokeWidthButton(width: CGFloat, iconSize: CGFloat) -> some View {
-        Button(action: {
-            manager.strokeWidth = width
-        }) {
+        Button(action: { manager.strokeWidth = width }) {
             Circle()
                 .fill(manager.strokeWidth == width ? Color.primary : Color.secondary.opacity(0.4))
                 .frame(width: iconSize, height: iconSize)
@@ -267,75 +294,84 @@ public struct DrawingToolbarView: View {
 public struct DrawingCanvasContainerView: View {
     @Environment(\.scenePhase) private var scenePhase
     @ObservedObject var manager: DrawingCanvasManager
+    @ObservedObject var blurManager: BlurLensManager
     @Binding var isDrawingMode: Bool
     var isBroadcasting: Bool
-    
+
     public init(
         manager: DrawingCanvasManager = .shared,
+        blurManager: BlurLensManager = .shared,
         isDrawingMode: Binding<Bool>,
         isBroadcasting: Bool
     ) {
         self.manager = manager
+        self.blurManager = blurManager
         self._isDrawingMode = isDrawingMode
         self.isBroadcasting = isBroadcasting
     }
-    
+
     public var body: some View {
-        ZStack {
-            // Background depending on mode
-            switch manager.backgroundMode {
-            case .transparentOverlay:
-                Color.clear
-            case .whiteboard:
-                Color.white
-                    .ignoresSafeArea()
-            case .blackboard:
-                Color(red: 0.12, green: 0.14, blue: 0.13)
-                    .ignoresSafeArea()
-            }
-            
-            // PencilKit Canvas
-            PencilCanvasRepresentable(
-                manager: manager,
-                isInteractionEnabled: isDrawingMode
-            )
-            .ignoresSafeArea()
-            
-            // Top live broadcast status banner if broadcasting
-            VStack {
-                if isBroadcasting {
-                    HStack(spacing: 8) {
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 10, height: 10)
-                            .opacity(isBroadcasting ? 1.0 : 0.4)
-                        
-                        Text("REC ● Screen Drawing Captured Live")
-                            .font(.caption.bold())
-                            .foregroundColor(.white)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(Color.black.opacity(0.75))
-                            .overlay(
-                                Capsule().stroke(Color.red.opacity(0.6), lineWidth: 1)
-                            )
-                    )
-                    .padding(.top, 8)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+        GeometryReader { geo in
+            ZStack {
+                // ── Background ───────────────────────────────────────────
+                switch manager.backgroundMode {
+                case .transparentOverlay:
+                    Color.clear
+                case .whiteboard:
+                    Color.white.ignoresSafeArea()
+                case .blackboard:
+                    Color(red: 0.12, green: 0.14, blue: 0.13).ignoresSafeArea()
                 }
-                
-                Spacer()
-                
-                // Floating Toolbar at Bottom
-                DrawingToolbarView(
+
+                // ── PencilKit Canvas ─────────────────────────────────────
+                PencilCanvasRepresentable(
                     manager: manager,
-                    isDrawingMode: $isDrawingMode
+                    isInteractionEnabled: isDrawingMode && !blurManager.isBlurModeActive
                 )
-                .padding(.horizontal, 12)
-                .padding(.bottom, 8)
+                .ignoresSafeArea()
+
+                // ── Blur Lens Overlay (sits above the canvas) ────────────
+                BlurLensOverlayView(
+                    blurManager: blurManager,
+                    containerSize: geo.size
+                )
+                .ignoresSafeArea()
+                // Intercept touches only when placement mode is active or a
+                // lens is present — otherwise let PencilKit handle all input.
+                .allowsHitTesting(blurManager.isBlurModeActive || !blurManager.lenses.isEmpty)
+
+                // ── HUD + Toolbar ────────────────────────────────────────
+                VStack {
+                    if isBroadcasting {
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 10, height: 10)
+                            Text("REC ● Screen Drawing Captured Live")
+                                .font(.caption.bold())
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(Color.black.opacity(0.75))
+                                .overlay(Capsule().stroke(Color.red.opacity(0.6), lineWidth: 1))
+                        )
+                        .padding(.top, 8)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+
+                    Spacer()
+
+                    DrawingToolbarView(
+                        manager: manager,
+                        blurManager: blurManager,
+                        isDrawingMode: $isDrawingMode
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+                }
             }
         }
         .onAppear {
@@ -356,6 +392,7 @@ public struct BrowseAndDrawView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var manager: DrawingCanvasManager
+    @ObservedObject var blurManager: BlurLensManager
     @Binding var isDrawingMode: Bool
     var isBroadcasting: Bool
 
@@ -364,72 +401,84 @@ public struct BrowseAndDrawView: View {
 
     public init(
         manager: DrawingCanvasManager = .shared,
+        blurManager: BlurLensManager = .shared,
         isDrawingMode: Binding<Bool>,
         isBroadcasting: Bool
     ) {
         self.manager = manager
+        self.blurManager = blurManager
         self._isDrawingMode = isDrawingMode
         self.isBroadcasting = isBroadcasting
     }
 
     public var body: some View {
-        ZStack {
-            InAppWebView(url: pageURL)
+        GeometryReader { geo in
+            ZStack {
+                // ── Web content ──────────────────────────────────────────
+                InAppWebView(url: pageURL)
+                    .ignoresSafeArea()
+
+                // ── Canvas background mode tint ──────────────────────────
+                switch manager.backgroundMode {
+                case .transparentOverlay: Color.clear
+                case .whiteboard:        Color.white.opacity(0.96)
+                case .blackboard:        Color(red: 0.12, green: 0.14, blue: 0.13).opacity(0.96)
+                }
+
+                // ── PencilKit annotation layer ───────────────────────────
+                PencilCanvasRepresentable(
+                    manager: manager,
+                    isInteractionEnabled: isDrawingMode && !blurManager.isBlurModeActive
+                )
                 .ignoresSafeArea()
 
-            switch manager.backgroundMode {
-            case .transparentOverlay:
-                Color.clear
-            case .whiteboard:
-                Color.white.opacity(0.96)
-            case .blackboard:
-                Color(red: 0.12, green: 0.14, blue: 0.13).opacity(0.96)
-            }
-
-            PencilCanvasRepresentable(
-                manager: manager,
-                isInteractionEnabled: isDrawingMode
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 8) {
-                HStack(spacing: 6) {
-                    TextField("Enter a website", text: $addressText)
-                        .textFieldStyle(.roundedBorder)
-                        .textInputAutocapitalization(.never)
-                        .keyboardType(.URL)
-                        .submitLabel(.go)
-                        .onSubmit { navigate() }
-
-                    Button("Go", action: navigate)
-                        .buttonStyle(.borderedProminent)
-
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .buttonStyle(.bordered)
-                }
-                .padding(.horizontal, 10)
-                .padding(.top, 8)
-                .background(.ultraThinMaterial)
-
-                if isBroadcasting {
-                    Text("REC ● Browse & Draw is included in the recording")
-                        .font(.caption.bold())
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Capsule().fill(.black.opacity(0.75)))
-                }
-
-                Spacer()
-
-                DrawingToolbarView(
-                    manager: manager,
-                    isDrawingMode: $isDrawingMode
+                // ── Blur Lens Overlay ────────────────────────────────────
+                BlurLensOverlayView(
+                    blurManager: blurManager,
+                    containerSize: geo.size
                 )
-                .padding(.horizontal, 12)
-                .padding(.bottom, 8)
+                .ignoresSafeArea()
+                .allowsHitTesting(blurManager.isBlurModeActive || !blurManager.lenses.isEmpty)
+
+                // ── Chrome: address bar + toolbar ────────────────────────
+                VStack(spacing: 8) {
+                    HStack(spacing: 6) {
+                        TextField("Enter a website", text: $addressText)
+                            .textFieldStyle(.roundedBorder)
+                            .textInputAutocapitalization(.never)
+                            .keyboardType(.URL)
+                            .submitLabel(.go)
+                            .onSubmit { navigate() }
+
+                        Button("Go", action: navigate)
+                            .buttonStyle(.borderedProminent)
+
+                        Button("Done") { dismiss() }
+                            .buttonStyle(.bordered)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.top, 8)
+                    .background(.ultraThinMaterial)
+
+                    if isBroadcasting {
+                        Text("REC ● Browse & Draw is included in the recording")
+                            .font(.caption.bold())
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(.black.opacity(0.75)))
+                    }
+
+                    Spacer()
+
+                    DrawingToolbarView(
+                        manager: manager,
+                        blurManager: blurManager,
+                        isDrawingMode: $isDrawingMode
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+                }
             }
         }
         .onAppear {
@@ -469,5 +518,9 @@ private struct InAppWebView: UIViewRepresentable {
 #Preview {
     @Previewable
     @State var isDrawing = true
-    return DrawingToolbarView(manager: DrawingCanvasManager(), isDrawingMode: $isDrawing)
+    return DrawingToolbarView(
+        manager: DrawingCanvasManager(),
+        blurManager: BlurLensManager(),
+        isDrawingMode: $isDrawing
+    )
 }
