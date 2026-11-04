@@ -113,7 +113,7 @@ public struct DrawingToolbarView: View {
 
     // MARK: Expanded Toolbar
     private var expandedToolbar: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 20) {
             // ── Row 1: Primary Controls ───────────────────────────────────
             HStack(spacing: 8) {
                 // Toggle Draw vs Touch/Interact
@@ -125,7 +125,7 @@ public struct DrawingToolbarView: View {
                     .font(.caption.bold())
                     .foregroundColor(isDrawingMode ? .white : .primary)
                     .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
+                    .padding(.vertical, 8)
                     .background(isDrawingMode ? Color.blue : Color(.systemGray5))
                     .cornerRadius(8)
                 }
@@ -135,23 +135,23 @@ public struct DrawingToolbarView: View {
                         : "Touch mode active. Tap for drawing mode"
                 )
 
-                Divider().frame(height: 24)
+                //Divider().frame(height: 24)
 
                 // Tool Pickers (Pen, Highlighter, Pencil, Eraser)
-                ForEach(DrawingToolType.allCases) { tool in
-                    Button(action: {
-                        manager.activeTool = tool
-                        if !isDrawingMode { isDrawingMode = true }
-                    }) {
-                        Image(systemName: tool.iconName)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(manager.activeTool == tool && isDrawingMode ? .white : .primary)
-                            .frame(width: 32, height: 32)
-                            .background(manager.activeTool == tool && isDrawingMode ? Color.purple : Color.clear)
-                            .clipShape(Circle())
-                    }
-                    .accessibilityLabel("\(tool.rawValue) tool")
-                }
+//                ForEach(DrawingToolType.allCases) { tool in
+//                    Button(action: {
+//                        manager.activeTool = tool
+//                        if !isDrawingMode { isDrawingMode = true }
+//                    }) {
+//                        Image(systemName: tool.iconName)
+//                            .font(.system(size: 15, weight: .semibold))
+//                            .foregroundColor(manager.activeTool == tool && isDrawingMode ? .white : .primary)
+//                            .frame(width: 32, height: 32)
+//                            .background(manager.activeTool == tool && isDrawingMode ? Color.purple : Color.clear)
+//                            .clipShape(Circle())
+//                    }
+//                    .accessibilityLabel("\(tool.rawValue) tool")
+//                }
 
                 Divider().frame(height: 24)
 
@@ -207,57 +207,57 @@ public struct DrawingToolbarView: View {
             }
 
             // ── Row 2: Color Palette, Stroke Width, Background Mode ───────
-            HStack(spacing: 8) {
-                // Color Swatches
-                ForEach(DrawingColor.allCases) { color in
-                    Button(action: {
-                        manager.strokeColor = color
-                        if manager.activeTool == .eraser { manager.activeTool = .pen }
-                    }) {
-                        Circle()
-                            .fill(color.swiftUIColor)
-                            .frame(width: 22, height: 22)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.primary, lineWidth: manager.strokeColor == color ? 2.5 : 0.5)
-                            )
-                            .scaleEffect(manager.strokeColor == color ? 1.15 : 1.0)
-                    }
-                    .accessibilityLabel("\(color.rawValue) color")
-                }
-
-                Divider().frame(height: 20)
-
-                // Stroke Width options
-                HStack(spacing: 4) {
-                    strokeWidthButton(width: 2.5, iconSize: 4)
-                    strokeWidthButton(width: 5.0, iconSize: 7)
-                    strokeWidthButton(width: 10.0, iconSize: 11)
-                }
-
-                Spacer(minLength: 0)
-
-                // Background Mode Picker
-                Menu {
-                    ForEach(DrawingBackgroundMode.allCases) { mode in
-                        Button(action: { manager.backgroundMode = mode }) {
-                            Label(mode.rawValue, systemImage: mode.iconName)
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: manager.backgroundMode.iconName)
-                            .font(.caption)
-                        Text(manager.backgroundMode.rawValue)
-                            .font(.caption2.bold())
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(6)
-                }
-                .accessibilityLabel("Canvas background mode")
-            }
+//            HStack(spacing: 8) {
+//                // Color Swatches
+//                ForEach(DrawingColor.allCases) { color in
+//                    Button(action: {
+//                        manager.strokeColor = color
+//                        if manager.activeTool == .eraser { manager.activeTool = .pen }
+//                    }) {
+//                        Circle()
+//                            .fill(color.swiftUIColor)
+//                            .frame(width: 22, height: 22)
+//                            .overlay(
+//                                Circle()
+//                                    .stroke(Color.primary, lineWidth: manager.strokeColor == color ? 2.5 : 0.5)
+//                            )
+//                            .scaleEffect(manager.strokeColor == color ? 1.15 : 1.0)
+//                    }
+//                    .accessibilityLabel("\(color.rawValue) color")
+//                }
+//
+//                Divider().frame(height: 20)
+//
+//                // Stroke Width options
+//                HStack(spacing: 4) {
+//                    strokeWidthButton(width: 2.5, iconSize: 4)
+//                    strokeWidthButton(width: 5.0, iconSize: 7)
+//                    strokeWidthButton(width: 10.0, iconSize: 11)
+//                }
+//
+//                Spacer(minLength: 0)
+//
+//                // Background Mode Picker
+//                Menu {
+//                    ForEach(DrawingBackgroundMode.allCases) { mode in
+//                        Button(action: { manager.backgroundMode = mode }) {
+//                            Label(mode.rawValue, systemImage: mode.iconName)
+//                        }
+//                    }
+//                } label: {
+//                    HStack(spacing: 4) {
+//                        Image(systemName: manager.backgroundMode.iconName)
+//                            .font(.caption)
+//                        Text(manager.backgroundMode.rawValue)
+//                            .font(.caption2.bold())
+//                    }
+//                    .padding(.horizontal, 8)
+//                    .padding(.vertical, 4)
+//                    .background(Color(.systemGray6))
+//                    .cornerRadius(6)
+//                }
+//                .accessibilityLabel("Canvas background mode")
+//            }
 
             // ── Row 3: Blur Lens Presets (shown when showBlurRow == true) ─
             if showBlurRow {

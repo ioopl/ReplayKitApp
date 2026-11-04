@@ -333,8 +333,8 @@ public struct BlurToolbarSection: View {
     }
 
     public var body: some View {
-        HStack(spacing: 6) {
-            // Label
+        VStack(alignment: .leading, spacing: 12) {
+            // Label Header
             HStack(spacing: 4) {
                 Image(systemName: "aqi.medium")
                     .font(.system(size: 13, weight: .semibold))
@@ -343,37 +343,37 @@ public struct BlurToolbarSection: View {
                     .font(.caption.bold())
                     .foregroundStyle(blurManager.isBlurModeActive ? Color.cyan : Color.secondary)
             }
-            .frame(width: 44)
-
-            Divider().frame(height: 22)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(BlurLensPreset.allCases) { preset in
-                        blurPresetButton(preset)
-                    }
-
-                    Divider().frame(height: 22)
-
-                    // Remove-all
-                    Button(action: {
-                        blurManager.removeAll()
-                        blurManager.deactivateBlurMode()
-                    }) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(blurManager.lenses.isEmpty
-                                             ? Color.secondary.opacity(0.4) : Color.red)
-                            .frame(width: 30, height: 30)
-                            .background(Color(.systemGray6))
-                            .clipShape(Circle())
-                    }
-                    .disabled(blurManager.lenses.isEmpty)
-                    .accessibilityLabel("Remove all blur lenses")
+            
+            // Dynamic, evenly spaced wrapping layout
+            // Defines a 5-column layout where each column expands equally to fill the space
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5),
+                alignment: .center,
+                spacing: 12
+            ) {
+                ForEach(BlurLensPreset.allCases) { preset in
+                    blurPresetButton(preset)
                 }
+
+                // Remove-all trash button fills the last slot in the layout grid seamlessly
+                Button(action: {
+                    blurManager.removeAll()
+                    blurManager.deactivateBlurMode()
+                }) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(blurManager.lenses.isEmpty
+                                         ? Color.secondary.opacity(0.4) : Color.red)
+                        .frame(width: 30, height: 30)
+                        .background(Color(.systemGray6))
+                        .clipShape(Circle())
+                }
+                .disabled(blurManager.lenses.isEmpty)
+                .accessibilityLabel("Remove all blur lenses")
             }
         }
     }
+
 
     @ViewBuilder
     private func blurPresetButton(_ preset: BlurLensPreset) -> some View {
@@ -410,11 +410,11 @@ public struct BlurToolbarSection: View {
 
     private func shortLabel(_ preset: BlurLensPreset) -> String {
         switch preset {
-        case .smallCircle: return "Sm. Circle"
-        case .bigCircle:   return "Lg. Circle"
-        case .rectangle:   return "Rect"
+        case .smallCircle: return "Small Circle"
+        case .bigCircle:   return "Large Circle"
+        case .rectangle:   return "Rectangle"
         case .square:      return "Square"
-        case .fullScreen:  return "Full Scr."
+        case .fullScreen:  return "Full Screen"
         }
     }
 }
