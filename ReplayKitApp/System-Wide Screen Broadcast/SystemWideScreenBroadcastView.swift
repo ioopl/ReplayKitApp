@@ -1,6 +1,9 @@
 import SwiftUI
 import ReplayKit
 
+/**
+ SystemWideScreenBroadcastView – responsible for displaying the current state.
+ */
 public struct SystemWideScreenBroadcastView: View {
     @StateObject private var viewModel = SystemWideScreenBroadcastViewModel()
     @ObservedObject private var settings = CaptureSettings.shared
@@ -9,6 +12,7 @@ public struct SystemWideScreenBroadcastView: View {
     @State private var isDrawingMode = true
     @State private var isBrowseDrawActive = false
     @State private var showDrawingOptions = false
+    @State private var broadcastPickerTrigger = 0
 
     public init() {}
 
@@ -87,7 +91,7 @@ public struct SystemWideScreenBroadcastView: View {
                     if let photosSaveMessage = viewModel.photosSaveMessage {
                         Text(photosSaveMessage)
                             .foregroundColor(photosSaveMessage == "Broadcast saved to Photos." ? .green : .orange)
-                            .font(.caption)
+                            .font(.title2)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                     }
@@ -175,10 +179,10 @@ public struct SystemWideScreenBroadcastView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 56)
                                 .background(Color(red: 1.0, green: 0.27, blue: 0.23))
-                                .cornerRadius(14)
+                                .cornerRadius(48)
                                 .shadow(color: Color.red.opacity(0.25), radius: 8, x: 0, y: 4)
 
-                                BroadcastPickerRepresentable()
+                                BroadcastPickerRepresentable(trigger: broadcastPickerTrigger)
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                                     .opacity(0.015)
                             }
@@ -210,7 +214,7 @@ public struct SystemWideScreenBroadcastView: View {
                                 .background(Color(.secondarySystemGroupedBackground))
                                 .cornerRadius(14)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
+                                    RoundedRectangle(cornerRadius: 48)
                                         .stroke(showDrawingOptions ? Color.purple.opacity(0.3) : Color.primary.opacity(0.12), lineWidth: 1)
                                 )
                                 .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
@@ -263,18 +267,6 @@ public struct SystemWideScreenBroadcastView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("Screen Record")
-                    .font(.system(size: 33, weight: .bold, design: .rounded))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.blue, .purple, .pink],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            }
-
             // Scribble toolbar icon: Only visible when Authenticated
             if viewModel.isAuthenticated {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -293,13 +285,41 @@ public struct SystemWideScreenBroadcastView: View {
                     .accessibilityLabel(viewModel.isDrawingActive ? "Hide Drawing Canvas" : "Show Drawing Canvas")
                 }
             }
+            
+            // MARK: - Screen Recording Toolbar Action
 
+            if viewModel.isAuthenticated {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+#if targetEnvironment(simulator)
+                        viewModel.simulateBroadcastEnded()
+#else
+                        broadcastPickerTrigger += 1
+#endif
+                    } label: {
+                        Image(systemName: viewModel.isBroadcasting
+                              ? "record.circle.fill"
+                              : "record.circle")
+                        .font(.body)
+                        .foregroundStyle(
+                            viewModel.isBroadcasting ? .red : .primary
+                        )
+                    }
+                    .accessibilityLabel(viewModel.isBroadcasting
+                                        ? "Stop Screen Recording"
+                                        : "Start Screen Recording")
+                    .accessibilityHint(
+                        "Opens the system screen broadcast controls.")
+                }
+            }
+            
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
                     showSettings = true
                 }) {
                     Image(systemName: "gearshape.fill")
                         .font(.body)
+                        .foregroundStyle(.black)
                 }
                 .accessibilityLabel("Settings")
             }
@@ -346,29 +366,6 @@ public struct SystemWideScreenBroadcastView: View {
         .onChange(of: viewModel.isAuthenticated) { authenticated in
             if !authenticated {
                 showDrawingOptions = false
-            }
-        }
-    }
-}
-
-// MARK: - Native ReplayKit Broadcast Picker Representable
-struct BroadcastPickerRepresentable: UIViewRepresentable {
-    func makeUIView(context: Context) -> RPSystemBroadcastPickerView {
-        let picker = CustomBroadcastPickerView(frame: .zero)
-        picker.showsMicrophoneButton = true
-        picker.preferredExtension = "com.apkia.replaykitapp.BroadcastExtension"
-        return picker
-    }
-
-    func updateUIView(_ uiView: RPSystemBroadcastPickerView, context: Context) {}
-}
-
-final class CustomBroadcastPickerView: RPSystemBroadcastPickerView {
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        for subview in subviews {
-            if let button = subview as? UIButton {
-                button.frame = bounds
             }
         }
     }

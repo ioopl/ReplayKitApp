@@ -11,13 +11,16 @@ extension Notification.Name {
     public static let appDataDidDelete = Notification.Name("appDataDidDelete")
 }
 
+/**
+    SystemWideScreenBroadcastViewModel – responsible for tracking the actual broadcasting state and session lifecycle.
+ */
 @MainActor
 public class SystemWideScreenBroadcastViewModel: ObservableObject {
     @Published public var isAuthenticated = false
     @Published public var keyStatus = "Keys Not Prepared"
     @Published public var errorMessage: String?
     
-    @Published public var isBroadcasting = false
+    @Published public var isBroadcasting = false // isBroadcasting is a state property, not the mechanism that starts or stops a ReplayKit broadcast.
     @Published public var showSummary = false
     @Published public var lastSessionDuration: TimeInterval = 0
     @Published public var showMockSummary = false
