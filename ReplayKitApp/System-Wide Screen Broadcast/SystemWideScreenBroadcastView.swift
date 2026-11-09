@@ -189,55 +189,6 @@ public struct SystemWideScreenBroadcastView: View {
                             .frame(height: 56)
                             .padding(.horizontal, 4)
                             #endif
-
-//                            // Drawing Options Button (BELOW the Record button)
-//                            Button(action: {
-//                                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-//                                    showDrawingOptions.toggle()
-//                                }
-//                            }) {
-//                                HStack(spacing: 10) {
-//                                    Image(systemName: "paintpalette.fill")
-//                                        .font(.headline)
-//                                        .foregroundColor(.purple)
-//                                    Text(showDrawingOptions ? "Hide Drawing Options" : "Show Drawing Options")
-//                                        .font(.headline.weight(.semibold))
-//                                        .foregroundColor(.primary)
-//                                    Spacer()
-//                                    Image(systemName: showDrawingOptions ? "chevron.up" : "chevron.down")
-//                                        .font(.subheadline.weight(.semibold))
-//                                        .foregroundColor(.secondary)
-//                                }
-//                                .padding(.horizontal, 16)
-//                                .frame(maxWidth: .infinity)
-//                                .frame(height: 56)
-//                                .background(Color(.secondarySystemGroupedBackground))
-//                                .cornerRadius(14)
-//                                .overlay(
-//                                    RoundedRectangle(cornerRadius: 48)
-//                                        .stroke(showDrawingOptions ? Color.purple.opacity(0.3) : Color.primary.opacity(0.12), lineWidth: 1)
-//                                )
-//                                .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
-//                            }
-//                            .buttonStyle(.plain)
-//                            .padding(.horizontal, 4)
-//                            .accessibilityLabel(showDrawingOptions ? "Hide Drawing Options" : "Show Drawing Options")
-//                            .accessibilityHint("Toggles display of live screen drawing and web canvas options below.")
-//                            .accessibilityAddTraits(.isButton)
-//
-//                            // Live Screen Drawing Options (Expands smoothly BELOW the button)
-//                            if showDrawingOptions {
-//                                LiveScreenDrawingSectionView(
-//                                    isDrawingActive: $viewModel.isDrawingActive,
-//                                    onBrowseAndDraw: {
-//                                        isBrowseDrawActive = true
-//                                        viewModel.isDrawingActive = true
-//                                    },
-//                                    isCardStyle: true
-//                                )
-//                                .padding(.horizontal, 4)
-//                                .transition(.opacity.combined(with: .move(edge: .top)))
-//                            }
                         }
                     }
                     .padding(.horizontal, 16)

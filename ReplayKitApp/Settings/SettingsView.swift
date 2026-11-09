@@ -77,7 +77,7 @@ public struct SettingsView: View {
                             HStack(spacing: 8) {
                                 Image(systemName: "safari")
                                     .font(.subheadline.weight(.semibold))
-                                Text("Browse and Draw in Web")
+                                Text("Browse and Draw in Web") // Main Label for the Button
                                     .font(.subheadline.weight(.semibold))
                             }
                             .foregroundColor(.white)
@@ -90,7 +90,7 @@ public struct SettingsView: View {
                     }
                     .padding(.vertical, 4)
                 } header: {
-                    Text("Browse and Draw in Web")
+                    Text("Browse and Draw in Web")// HEADER
                 } footer: {
                     Text("Open an independent in-app browser with drawing tools to navigate and annotate web pages.")
                 }
