@@ -68,7 +68,7 @@ Note: A telestrator is an electronic device or software tool that lets an operat
 
 1. **`DrawingCanvasManager.swift`**:
    - Manages PencilKit state, active tool (`.pen`, `.highlighter`, `.pencil`, `.eraser`), color selection, stroke width, background modes, undo/redo stack, and snapshot rendering.
-2. **`DrawingCanvasView.swift`**:
+2. **`PencilCanvasRepresentable`**:
    - `PencilCanvasRepresentable`: `UIViewRepresentable` wrapping `PKCanvasView` configured with `.anyInput` for immediate finger and stylus support.
    - `DrawingToolbarView`: Floating, dockable, collapsible toolbar with tools, swatches, thickness, undo/redo, clear, and background modes.
    - `DrawingCanvasContainerView`: Fullscreen container supporting Transparent Overlay, Whiteboard, and Blackboard with live broadcast status.
