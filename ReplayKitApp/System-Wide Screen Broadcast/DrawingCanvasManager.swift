@@ -122,7 +122,9 @@ public class DrawingCanvasManager: ObservableObject, DrawingServiceProtocol {
     public func registerCanvas(_ canvas: PKCanvasView) {
         self.canvasView = canvas
         updateCanvasTool()
-        updateUndoRedoState()
+        DispatchQueue.main.async { [weak self] in
+            self?.updateUndoRedoState()
+        }
     }
     
     public func updateCanvasTool() {
@@ -141,14 +143,18 @@ public class DrawingCanvasManager: ObservableObject, DrawingServiceProtocol {
     
     public func updateUndoRedoState() {
         guard let canvas = canvasView else {
-            canUndo = false
-            canRedo = false
-            hasStrokes = false
+            if canUndo { canUndo = false }
+            if canRedo { canRedo = false }
+            if hasStrokes { hasStrokes = false }
             return
         }
-        canUndo = canvas.undoManager?.canUndo ?? false
-        canRedo = canvas.undoManager?.canRedo ?? false
-        hasStrokes = !canvas.drawing.strokes.isEmpty
+        let newCanUndo = canvas.undoManager?.canUndo ?? false
+        let newCanRedo = canvas.undoManager?.canRedo ?? false
+        let newHasStrokes = !canvas.drawing.strokes.isEmpty
+        
+        if canUndo != newCanUndo { canUndo = newCanUndo }
+        if canRedo != newCanRedo { canRedo = newCanRedo }
+        if hasStrokes != newHasStrokes { hasStrokes = newHasStrokes }
     }
     
     public func undo() {

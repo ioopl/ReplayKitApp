@@ -36,7 +36,7 @@ public struct PencilCanvasRepresentable: UIViewRepresentable {
     
     public func updateUIView(_ uiView: PKCanvasView, context: Context) {
         uiView.isUserInteractionEnabled = isInteractionEnabled
-        if manager.canvasView == nil {
+        if manager.canvasView !== uiView {
             manager.registerCanvas(uiView)
         }
     }
